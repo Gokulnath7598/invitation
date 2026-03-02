@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gokul & Ramya – Wedding Invitation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,600;0,700;1,400&family=Pacifico&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero hero--drop-in" id="hero">
+    <!-- 1. BG only -->
+    <div class="hero__mountains" aria-hidden="true">
+      <img class="hero__mountain-img" src="assets/mountainBG.png" alt="" />
+    </div>
+
+    <!-- 2. Title layer – sits lower, goes behind temple as it rises (z below temple) -->
+    <div class="hero__title-layer" id="heroContent">
+      <h1 class="hero__title">
+        <span class="hero__name">Gokul</span>
+        <span class="hero__weds">Weds</span>
+        <span class="hero__name">Ramya</span>
+      </h1>
+    </div>
+
+    <!-- 3. Temple – larger, rises and covers title (z above title) -->
+    <div class="hero__temple-wrap" id="templeWrap">
+      <img class="hero__temple-img" src="assets/temple.png" alt="" aria-hidden="true" />
+    </div>
+
+    <!-- 4. Flowers – strip extends above viewport; scroll reveals more from top; move with text -->
+    <div class="hero__flowers-layer">
+      <div class="hero__flowers-inner">
+        <div class="hero__floats" aria-hidden="true">
+          <img class="hero__float hero__float--rose hero__float--1" src="assets/rose.png" alt="" />
+          <img class="hero__float hero__float--lotus hero__float--2" src="assets/lotus.png" alt="" />
+          <img class="hero__float hero__float--rose hero__float--3" src="assets/rose.png" alt="" />
+          <img class="hero__float hero__float--rose hero__float--4" src="assets/rose.png" alt="" />
+          <img class="hero__float hero__float--lotus hero__float--5" src="assets/lotus.png" alt="" />
+          <img class="hero__float hero__float--lotus hero__float--6" src="assets/lotus.png" alt="" />
+          <img class="hero__float hero__float--rose hero__float--7" src="assets/rose.png" alt="" />
+          <img class="hero__float hero__float--rose hero__float--8" src="assets/rose.png" alt="" />
+          <img class="hero__float hero__float--lotus hero__float--9" src="assets/lotus.png" alt="" />
+          <img class="hero__float hero__float--lotus hero__float--10" src="assets/lotus.png" alt="" />
+          <img class="hero__float hero__float--rose hero__float--11" src="assets/rose.png" alt="" />
+          <img class="hero__float hero__float--rose hero__float--12" src="assets/rose.png" alt="" />
+          <img class="hero__float hero__float--lotus hero__float--13" src="assets/lotus.png" alt="" />
+          <img class="hero__float hero__float--lotus hero__float--14" src="assets/lotus.png" alt="" />
+          <img class="hero__float hero__float--rose hero__float--15" src="assets/rose.png" alt="" />
+          <img class="hero__float hero__float--rose hero__float--16" src="assets/rose.png" alt="" />
+          <img class="hero__float hero__float--lotus hero__float--17" src="assets/lotus.png" alt="" />
+          <img class="hero__float hero__float--lotus hero__float--18" src="assets/lotus.png" alt="" />
+          <img class="hero__float hero__float--lotus hero__float--19" src="assets/lotus.png" alt="" />
+          <img class="hero__float hero__float--rose hero__float--20" src="assets/rose.png" alt="" />
+          <img class="hero__float hero__float--lotus hero__float--21" src="assets/lotus.png" alt="" />
+          <img class="hero__float hero__float--rose hero__float--22" src="assets/rose.png" alt="" />
+          <img class="hero__float hero__float--lotus hero__float--23" src="assets/lotus.png" alt="" />
+          <img class="hero__float hero__float--rose hero__float--24" src="assets/rose.png" alt="" />
+          <img class="hero__float hero__float--lotus hero__float--25" src="assets/lotus.png" alt="" />
+          <img class="hero__float hero__float--rose hero__float--26" src="assets/rose.png" alt="" />
+        </div>
+      </div>
+      <div class="hero__flowers-title-group">
+      <div class="hero__title-flowers">
+        <img class="hero__title-flower hero__title-flower--lotus hero__title-flower--1" src="assets/lotus.png" alt="" aria-hidden="true" />
+        <img class="hero__title-flower hero__title-flower--rose hero__title-flower--2" src="assets/rose.png" alt="" aria-hidden="true" />
+      </div>
+      <div class="hero__flowers-above-title" aria-hidden="true">
+        <img class="hero__above-flower hero__above-flower--1 hero__flower--lotus" src="assets/lotus.png" alt="" />
+        <img class="hero__above-flower hero__above-flower--2 hero__flower--rose" src="assets/rose.png" alt="" />
+        <img class="hero__above-flower hero__above-flower--3 hero__flower--lotus" src="assets/lotus.png" alt="" />
+      </div>
+      </div>
+    </div>
+
+    <!-- Scroll height -->
+    <div class="hero__scroll-area" id="heroScrollArea" aria-hidden="true"></div>
+  </header>
+
+  <!-- Placeholder section so we can scroll -->
+  <section class="below-hero" aria-hidden="true">
+    <div class="below-hero__content">
+      <p>Scroll down to see the temple gradually cover the text.</p>
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>

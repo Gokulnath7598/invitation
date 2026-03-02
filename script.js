@@ -7,6 +7,7 @@
   var flowersLayer = document.querySelector(".hero__flowers-layer");
   var flowersInner = document.querySelector(".hero__flowers-inner");
   var flowersTitleGroup = document.querySelector(".hero__flowers-title-group");
+  var section2 = document.getElementById("section2");
 
   if (!hero || !templeWrap) return;
 
@@ -59,10 +60,7 @@
     var heightVh = progress < 1
       ? heights.initial + (heights.max - heights.initial) * progress
       : heights.max;
-    /* Section 1: temple rises (moves up) and grows at once, same progress */
-    var templeRisePx = progress < 1 ? (1 - progress) * 0.15 * viewportHeight : 0;
-    var templeTranslateY = templeRisePx + translateY;
-    /* Temple: set height and transform together so move & size stay in sync */
+    var templeTranslateY = Math.round((1 - progress) * 0.15 * viewportHeight + translateY);
     templeWrap.style.setProperty("--temple-height", heightVh + "vh");
     templeWrap.style.transform = "translateY(" + templeTranslateY + "px)";
     templeWrap.style.transition = "none";
@@ -80,15 +78,43 @@
     }
   }
 
+  /* Section 2: groom left → center, bride right → center as we scroll in */
+  var coupleProgressRaf = null;
+  var lastCoupleProgress = -1;
+
+  function updateCoupleProgress() {
+    if (!section2) return;
+    if (coupleProgressRaf !== null) return;
+    coupleProgressRaf = requestAnimationFrame(function () {
+      coupleProgressRaf = null;
+      var viewportHeight = window.innerHeight;
+      var rect = section2.getBoundingClientRect();
+      var top = rect.top;
+      var start = viewportHeight;
+      var end = viewportHeight * 0.15;
+      var progress = 1 - (top - end) / (start - end);
+      progress = Math.max(0, Math.min(1, progress));
+      /* Round to 2 decimals to avoid sub-pixel jitter; once fully in section 2 keep at 1 */
+      progress = Math.round(progress * 100) / 100;
+      if (top < -50) progress = 1; /* well inside section 2 – lock to 1 to prevent jump */
+      if (progress !== lastCoupleProgress) {
+        lastCoupleProgress = progress;
+        section2.style.setProperty("--couple-progress", progress);
+      }
+    });
+  }
+
   function onScroll() {
     updateTempleReveal();
     updateBgScroll();
+    updateCoupleProgress();
   }
 
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", function () {
     updateTempleReveal();
     updateBgScroll();
+    updateCoupleProgress();
   });
   /* After a short delay, apply final position so CSS transition runs smoothly (no flicker) */
   var dropInDurationMs = 2000;

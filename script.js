@@ -1,6 +1,10 @@
 (function () {
   "use strict";
 
+  /* Section 1: mountain BG + temple, text, flowers. When progress >= 1, animations are "complete" (temple at max, etc.)
+   * but we still apply translateY from scroll so section 1 scrolls away and section 2 can take over – we only freeze the
+   * animation state, not the scroll position. */
+
   var hero = document.getElementById("hero");
   var templeWrap = document.getElementById("templeWrap");
   var titleLayer = document.getElementById("heroContent");
@@ -11,12 +15,12 @@
 
   if (!hero || !templeWrap) return;
 
-  var initialTempleVh = 50;
-  var maxTempleVh = 95;
   var mobileBreakpoint = 768;
-  var scrollForFullVh = 55;
+  var scrollForFullVh = 55;  /* scroll over this many vh to complete section 1 */
   var titleTopStart = 32;
   var titleTopEnd = 72;
+  var initialTempleVh = 50;
+  var maxTempleVh = 95;
 
   function getTempleHeights() {
     var isMobile = window.innerWidth < mobileBreakpoint;
@@ -26,110 +30,136 @@
     };
   }
 
-  /* Set correct initial temple height and transform immediately so no jump on load */
+  /* Initial hero state */
   var h0 = getTempleHeights();
   templeWrap.style.setProperty("--temple-height", h0.initial + "vh");
   var initialRisePx = 0.15 * (window.innerHeight || 600);
   templeWrap.style.transform = "translateY(" + initialRisePx + "px)";
   templeWrap.style.transition = "none";
 
-  function updateTempleReveal() {
-    var scrollY = window.scrollY || window.pageYOffset;
-    var viewportHeight = window.innerHeight;
-    var scrollVh = (scrollY / viewportHeight) * 100;
-    var progress = Math.min(scrollVh / scrollForFullVh, 1);
-    /* Section 1 only: title moves down in sync with temple rising */
-    if (titleLayer) {
-      var titleTop = titleTopStart + (titleTopEnd - titleTopStart) * progress;
-      titleLayer.style.setProperty("--title-top", titleTop + "%");
-    }
-  }
+  var scrollRaf = null;
+  var scrollScheduled = false;
+  var lastCoupleProgress = -1;
+  var debugLogCount = 0;
 
-  function updateBgScroll() {
+  function runScrollUpdates() {
+    scrollRaf = null;
+    scrollScheduled = false;
+
     var scrollY = window.scrollY || window.pageYOffset;
     var viewportHeight = window.innerHeight;
+    var isMobile = window.innerWidth < mobileBreakpoint;
     var thresholdPx = (scrollForFullVh / 100) * viewportHeight;
     var scrollVh = (scrollY / viewportHeight) * 100;
     var progress = Math.min(scrollVh / scrollForFullVh, 1);
-    var translateY = scrollY > thresholdPx ? -(scrollY - thresholdPx) : 0;
-    var pastSection1 = scrollY > thresholdPx;
+
+    /* translateY: moves section 1 content up as user scrolls past threshold, so section 1 scrolls away */
+    var translateStart = thresholdPx - 20;
+    var translateY = scrollY > translateStart ? -(scrollY - translateStart) : 0;
+
+    /* Animation state: freeze at 1 when complete (temple max, title at end); still use real translateY so hero scrolls away */
+    var animProgress = progress < 1 ? progress : 1;
     var useTransition = !hero || !hero.classList.contains("hero--loaded");
     var flowersLiftPx = 0.1 * viewportHeight;
-    var flowersMoveDownPx = progress * 0.2 * viewportHeight;
+    var flowersMoveDownPx = animProgress * 0.2 * viewportHeight;
     var heights = getTempleHeights();
-    var heightVh = progress < 1
-      ? heights.initial + (heights.max - heights.initial) * progress
+    var heightVh = animProgress < 1
+      ? heights.initial + (heights.max - heights.initial) * animProgress
       : heights.max;
-    var templeTranslateY = Math.round((1 - progress) * 0.15 * viewportHeight + translateY);
+
+    var templeTranslateY = Math.round((1 - animProgress) * 0.15 * viewportHeight + translateY);
+    var flowersTranslateY = Math.round(-flowersLiftPx + flowersMoveDownPx + translateY);
+    var mountainsTranslateY = Math.round(translateY);
+    var titleTranslateY = Math.round(translateY);
+
+    /* Section 1: always apply for smooth scroll; animProgress freezes animation at 1 */
+    if (titleLayer) {
+      var titleTop = titleTopStart + (titleTopEnd - titleTopStart) * animProgress;
+      titleLayer.style.setProperty("--title-top", titleTop + "%");
+      titleLayer.style.transition = useTransition ? "" : "none";
+      titleLayer.style.transform = "translateY(-50%) translateY(" + titleTranslateY + "px)";
+    }
     templeWrap.style.setProperty("--temple-height", heightVh + "vh");
     templeWrap.style.transform = "translateY(" + templeTranslateY + "px)";
     templeWrap.style.transition = "none";
     if (flowersLayer) {
       flowersLayer.style.transition = useTransition ? "" : "none";
-      flowersLayer.style.transform = "translateY(" + (-flowersLiftPx + flowersMoveDownPx + translateY) + "px)";
+      flowersLayer.style.transform = "translateY(" + flowersTranslateY + "px)";
     }
     if (flowersInner) flowersInner.style.transform = "translateY(0)";
     if (flowersTitleGroup) flowersTitleGroup.style.transform = "translateY(0)";
     var mountains = document.querySelector(".hero__mountains");
-    if (mountains) mountains.style.transform = "translateY(" + translateY + "px)";
-    if (titleLayer) {
-      titleLayer.style.transition = useTransition ? "" : "none";
-      titleLayer.style.transform = "translateY(-50%) translateY(" + translateY + "px)";
-    }
-  }
+    if (mountains) mountains.style.transform = "translateY(" + mountainsTranslateY + "px)";
 
-  /* Section 2: groom left → center, bride right → center as we scroll in */
-  var coupleProgressRaf = null;
-  var lastCoupleProgress = -1;
-
-  function updateCoupleProgress() {
-    if (!section2) return;
-    if (coupleProgressRaf !== null) return;
-    coupleProgressRaf = requestAnimationFrame(function () {
-      coupleProgressRaf = null;
-      var viewportHeight = window.innerHeight;
+    /* Section 2 */
+    if (section2) {
       var rect = section2.getBoundingClientRect();
       var top = rect.top;
       var start = viewportHeight;
       var end = viewportHeight * 0.15;
-      var progress = 1 - (top - end) / (start - end);
-      progress = Math.max(0, Math.min(1, progress));
-      /* Round to 2 decimals to avoid sub-pixel jitter; once fully in section 2 keep at 1 */
-      progress = Math.round(progress * 100) / 100;
-      if (top < -50) progress = 1; /* well inside section 2 – lock to 1 to prevent jump */
-      if (progress !== lastCoupleProgress) {
-        lastCoupleProgress = progress;
-        section2.style.setProperty("--couple-progress", progress);
+      var coupleProgress = 1 - (top - end) / (start - end);
+      coupleProgress = Math.max(0, Math.min(1, coupleProgress));
+      coupleProgress = Math.round(coupleProgress * 100) / 100;
+      if (top < -50) coupleProgress = 1;
+      if (coupleProgress !== lastCoupleProgress) {
+        lastCoupleProgress = coupleProgress;
+        section2.style.setProperty("--couple-progress", coupleProgress);
       }
-    });
+      if (isMobile) {
+        if (top < viewportHeight * 0.95) {
+          document.body.classList.add("section-2-in-view");
+        } else {
+          document.body.classList.remove("section-2-in-view");
+        }
+      } else {
+        document.body.classList.remove("section-2-in-view");
+      }
+    }
+
+    /* Debug (remove when you confirm it's fixed) */
+    var section2Top = section2 ? section2.getBoundingClientRect().top : viewportHeight + 1;
+    if (section2Top <= viewportHeight * 1.2 && section2Top >= -200) {
+      debugLogCount++;
+      if (debugLogCount % 2 === 0) {
+        console.log("[s1->s2]", {
+          progress: Math.round(progress * 100) / 100,
+          animProgress: Math.round(animProgress * 100) / 100,
+          scrollY: Math.round(scrollY),
+          vh: viewportHeight,
+          mobile: isMobile,
+          section2Top: Math.round(section2Top),
+          coupleProgress: section2 ? lastCoupleProgress : null
+        });
+      }
+    } else {
+      debugLogCount = 0;
+    }
   }
 
-  function onScroll() {
-    updateTempleReveal();
-    updateBgScroll();
-    updateCoupleProgress();
+  function scheduleScrollUpdate() {
+    if (scrollScheduled) return;
+    scrollScheduled = true;
+    if (scrollRaf !== null) return;
+    scrollRaf = requestAnimationFrame(runScrollUpdates);
   }
 
-  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("scroll", scheduleScrollUpdate, { passive: true });
   window.addEventListener("resize", function () {
-    updateTempleReveal();
-    updateBgScroll();
-    updateCoupleProgress();
+    scrollScheduled = false;
+    runScrollUpdates();
   });
-  /* After a short delay, apply final position so CSS transition runs smoothly (no flicker) */
-  var dropInDurationMs = 2000;
+
   setTimeout(function () {
-    updateTempleReveal();
-    updateBgScroll();
+    scrollScheduled = false;
+    runScrollUpdates();
     if (titleLayer) titleLayer.style.setProperty("--title-top", titleTopStart + "%");
-    var h = getTempleHeights();
-    templeWrap.style.setProperty("--temple-height", h.initial + "vh");
+    templeWrap.style.setProperty("--temple-height", getTempleHeights().initial + "vh");
   }, 80);
-  /* After drop-in animation finishes, switch to short transition for scroll */
+
   setTimeout(function () {
     if (hero) {
       hero.classList.add("hero--loaded");
       hero.classList.remove("hero--drop-in");
     }
-  }, 80 + dropInDurationMs);
+  }, 80 + 2000);
 })();

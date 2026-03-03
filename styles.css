@@ -9,6 +9,8 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-y: scroll;
+  overflow-x: hidden;
 }
 
 body {
@@ -73,6 +75,7 @@ body {
   text-align: center;
   padding: 0 1rem;
   transition: top 0.08s ease-out, transform 2s cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: transform;
 }
 
 /* Initial load: start higher so drop-in animation has a clear "from" state */
@@ -162,6 +165,7 @@ body {
   pointer-events: none;
   overflow: hidden;
   transition: transform 2s cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: transform;
 }
 
 /* Initial load: start higher so drop-in animation has a clear "from" state */
@@ -363,7 +367,7 @@ body {
   z-index: 5;
   min-height: 180vh;
   margin: 0;
-  margin-top: -28vh;
+  margin-top: -32vh;
   padding: 0;
   overflow: hidden;
   perspective: 1000px;
@@ -372,6 +376,13 @@ body {
   background-repeat: repeat;
   background-position: 0 0;
   background-size: 160px 160px;
+}
+
+@media (max-width: 767px) {
+  .section-2 {
+    margin-top: -58vh; /* pull up so carpet stays behind section 1 and doesn’t sit too far below */
+    background-size: 96px 96px;
+  }
 }
 
 .section-2::after {
@@ -403,10 +414,7 @@ body {
 @media (max-width: 767px) {
   .section-2__floor {
     transform: rotateX(18deg);
-  }
-
-  .section-2 {
-    background-size: 96px 96px;
+    top: 28vh; /* align with couple position */
   }
 }
 
@@ -513,8 +521,36 @@ body {
   height: 50vh;
   z-index: 10;
   pointer-events: none;
-  --groom-half-w: 3.5vw;
-  --bride-half-w: 3.3vw; /* 95% – a bit closer so they touch on desktop */
+  --groom-half-w: 4vw;
+  --bride-half-w: 3.8vw; /* ensure no overlap when they meet at center */
+}
+
+@media (max-width: 767px) {
+  /* On mobile: fixed; couple sit lower so heads not cropped by section 1; only visible when section 2 in view */
+  .section-2__couple {
+    position: fixed;
+    top: 34vh;
+    left: 0;
+    right: 0;
+    height: 42vh;
+    z-index: 20;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    --groom-half-w: 8.5vw;
+    --bride-half-w: 8vw; /* wider separation on narrow screens so they never overlap */
+  }
+  body.section-2-in-view .section-2__couple {
+    visibility: visible;
+    opacity: 1;
+  }
+  .section-2__groom {
+    max-height: 42vh;
+  }
+  .section-2__bride {
+    max-height: 39.9vh;
+    height: 95%;
+  }
 }
 
 .section-2__groom,
@@ -532,7 +568,6 @@ body {
   max-height: 50vh;
   left: 50%;
   z-index: 0;
-  /* At meet: center - groom half-width so right edge touches center */
   transform: translateX(calc(-50% + (1 - var(--couple-progress, 0)) * -38vw - var(--couple-progress, 0) * var(--groom-half-w)));
 }
 
@@ -541,24 +576,7 @@ body {
   max-height: 47.5vh;
   left: 50%;
   z-index: 1;
-  /* At meet: center + bride half-width so left edge touches center */
   transform: translateX(calc(-50% + (1 - var(--couple-progress, 0)) * 38vw + var(--couple-progress, 0) * var(--bride-half-w)));
-}
-
-@media (max-width: 767px) {
-  .section-2__couple {
-    height: 42vh;
-    top: 8vh;
-    --groom-half-w: 8vw;
-    --bride-half-w: 7.6vw; /* a bit more gap on mobile */
-  }
-  .section-2__groom {
-    max-height: 42vh;
-  }
-  .section-2__bride {
-    max-height: 39.9vh;
-    height: 95%;
-  }
 }
 
 .section-2__content {

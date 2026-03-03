@@ -40,7 +40,6 @@
   var scrollRaf = null;
   var scrollScheduled = false;
   var lastCoupleProgress = -1;
-  var debugLogCount = 0;
 
   function runScrollUpdates() {
     scrollRaf = null;
@@ -115,25 +114,6 @@
         document.body.classList.remove("section-2-in-view");
       }
     }
-
-    /* Debug (remove when you confirm it's fixed) */
-    var section2Top = section2 ? section2.getBoundingClientRect().top : viewportHeight + 1;
-    if (section2Top <= viewportHeight * 1.2 && section2Top >= -200) {
-      debugLogCount++;
-      if (debugLogCount % 2 === 0) {
-        console.log("[s1->s2]", {
-          progress: Math.round(progress * 100) / 100,
-          animProgress: Math.round(animProgress * 100) / 100,
-          scrollY: Math.round(scrollY),
-          vh: viewportHeight,
-          mobile: isMobile,
-          section2Top: Math.round(section2Top),
-          coupleProgress: section2 ? lastCoupleProgress : null
-        });
-      }
-    } else {
-      debugLogCount = 0;
-    }
   }
 
   function scheduleScrollUpdate() {
@@ -162,4 +142,36 @@
       hero.classList.remove("hero--drop-in");
     }
   }, 80 + 2000);
+
+  /* Background music: play on play tap, pause on pause tap */
+  (function () {
+    var audio = document.getElementById("bgMusic");
+    var btn = document.getElementById("musicToggle");
+    var icon = btn && btn.querySelector(".music-toggle__icon");
+    if (!audio || !btn) return;
+
+    function updateButton() {
+      var paused = audio.paused;
+      btn.classList.toggle("is-paused", paused);
+      btn.setAttribute("aria-label", paused ? "Play background music" : "Pause background music");
+      btn.setAttribute("title", paused ? "Play music" : "Pause music");
+      if (icon) icon.textContent = paused ? "▶" : "❚❚";
+    }
+
+    btn.addEventListener("click", function () {
+      if (audio.paused) {
+        audio.play().catch(function () {});
+      } else {
+        audio.pause();
+      }
+      updateButton();
+    });
+
+    audio.addEventListener("play", updateButton);
+    audio.addEventListener("pause", updateButton);
+
+    updateButton();
+    /* Try autoplay on start; if allowed → button shows pause, else stays play; user can toggle anytime */
+    audio.play().catch(function () {});
+  })();
 })();

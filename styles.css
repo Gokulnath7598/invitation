@@ -361,7 +361,7 @@ body {
   opacity: 0.92;
 }
 
-/* Section 2 – carpet at top (perspective), sand pattern (asset) fills rest */
+/* Section 2 – single uniform carpet (BG only; no tilted plane) */
 .section-2 {
   position: relative;
   z-index: 5;
@@ -370,18 +370,16 @@ body {
   margin-top: -32vh;
   padding: 0;
   overflow: hidden;
-  perspective: 1000px;
-  perspective-origin: center 0%;
-  background-image: url("assets/ground.jpg");
+  background-image: url("assets/redCarpetTexture.jpg");
   background-repeat: repeat;
   background-position: 0 0;
-  background-size: 160px 160px;
+  background-size: 280px 280px;
 }
 
 @media (max-width: 767px) {
   .section-2 {
-    margin-top: -58vh; /* pull up so carpet stays behind section 1 and doesn’t sit too far below */
-    background-size: 96px 96px;
+    margin-top: -30vh; /* pull up so carpet stays behind section 1 and doesn’t sit too far below */
+    background-size: 280px 280px;
   }
 }
 
@@ -389,62 +387,46 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(201, 184, 150, 0.12);
+  /* Darken background carpet to match tilted carpet; smooth gradient to avoid visible band */
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0.22) 20%,
+    rgba(0, 0, 0, 0.1) 40%,
+    rgba(0, 0, 0, 0.1) 60%,
+    rgba(0, 0, 0, 0.12) 100%
+  );
   pointer-events: none;
   z-index: 0;
 }
 
-/* Carpet plane at top – tilted (top=front, recedes down) */
+/* Floor: flat layout container only; tilted carpet removed so only section-2 BG shows */
 .section-2__floor {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   min-height: 95vh;
-  transform-origin: center 0%;
-  transform: rotateX(52deg);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem 2rem 3rem;
-  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
   z-index: 1;
 }
 
 @media (max-width: 767px) {
   .section-2__floor {
-    transform: rotateX(18deg);
-    top: 28vh; /* align with couple position */
+    top: 0;
   }
 }
 
-/* Red carpet – larger tiles for less repetition */
-.section-2__bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background-image: url("assets/redCarpetTexture.jpg");
-  background-repeat: repeat;
-  background-position: 0 0;
-  background-size: 220px 220px;
+/* Tilted carpet layers – hidden; only section-2 BG carpet is used. Sand corners stay visible. */
+.section-2__bg,
+.section-2__pattern {
+  display: none !important;
 }
 
-.section-2__bg::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.5) 0%,
-    rgba(0, 0, 0, 0.15) 35%,
-    transparent 60%,
-    transparent 85%,
-    rgba(0, 0, 0, 0.08) 100%
-  );
-  pointer-events: none;
-}
-
-/* Mild pattern overlay */
+/* Carpet border – left & right edges of the RED CARPET; clip-path so strips follow carpet’s converging edges */
 .section-2__pattern {
   position: absolute;
   inset: 0;
@@ -454,33 +436,38 @@ body {
   background-size: 20px 20px;
 }
 
-/* Corner triangles – ground.jpg, larger tiles, darkened */
+/* Corner triangles – sand pattern (same as section background), darkened overlay */
 .section-2__corner {
   position: absolute;
   top: 0;
   width: min(60vh, 56vw);
   height: min(60vh, 56vw);
   z-index: 2;
+  background-color: transparent;
   background-image: url("assets/ground.jpg");
-  background-size: 160px 160px;
   background-repeat: repeat;
-  background-position: left top;
-}
-
-@media (max-width: 767px) {
-  .section-2__corner {
-    width: min(38vh, 36vw);
-    height: min(38vh, 36vw);
-    background-size: 96px 96px;
-  }
+  background-position: 0 0;
+  background-size: 160px 160px;
+  box-sizing: border-box;
 }
 
 .section-2__corner::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.35);
   pointer-events: none;
+  z-index: 1;
+}
+
+@media (max-width: 767px) {
+  .section-2__corner {
+    width: min(28vh, 26vw);
+    height: min(28vh, 26vw);
+    max-width: 45%;
+    max-height: 40vh;
+    background-size: 96px 96px;
+  }
 }
 
 .section-2__corner--left {
@@ -493,23 +480,6 @@ body {
   left: auto;
   clip-path: polygon(100% 0, 100% 100%, 0 0);
   background-position: right top;
-}
-
-/* Front shadow – darker at bottom (floor meeting viewer) */
-.section-2__shadow--front {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 25%;
-  z-index: 2;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(0, 0, 0, 0.15) 40%,
-    rgba(0, 0, 0, 0.4) 100%
-  );
-  pointer-events: none;
 }
 
 /* Bride & groom – meet at center: groom right edge = center, bride left edge = center (no overlap) */
@@ -526,30 +496,49 @@ body {
 }
 
 @media (max-width: 767px) {
-  /* On mobile: fixed; couple sit lower so heads not cropped by section 1; only visible when section 2 in view */
+  /* Mobile: same as desktop – absolute, scroll with section 2; only horizontal movement from --couple-progress */
   .section-2__couple {
-    position: fixed;
-    top: 34vh;
+    position: absolute;
+    top: 8vh;
     left: 0;
     right: 0;
-    height: 42vh;
-    z-index: 20;
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity 0.25s ease, visibility 0.25s ease;
+    height: 48vh;
+    z-index: 10;
     --groom-half-w: 8.5vw;
-    --bride-half-w: 8vw; /* wider separation on narrow screens so they never overlap */
-  }
-  body.section-2-in-view .section-2__couple {
-    visibility: visible;
-    opacity: 1;
+    --bride-half-w: 8vw;
   }
   .section-2__groom {
-    max-height: 42vh;
+    max-height: 48vh;
   }
   .section-2__bride {
-    max-height: 39.9vh;
+    max-height: 45vh;
     height: 95%;
+  }
+}
+
+@media (max-width: 767px) {
+  .section-2__card-corners {
+    top: 73vh;
+    padding: 6% 5%;
+  }
+  .section-2__card-corner {
+    height: clamp(56px, 10vmin, 22vh);
+    width: clamp(56px, 10vmin, 22vh);
+    max-height: clamp(56px, 10vmin, 22vh);
+    max-width: clamp(56px, 10vmin, 22vh);
+  }
+}
+
+@media (max-width: 480px) {
+  .section-2__card-corners {
+    top: 71vh;
+    padding: 6% 5%;
+  }
+  .section-2__card-corner {
+    height: clamp(48px, 9vmin, 18vh);
+    width: clamp(48px, 9vmin, 18vh);
+    max-height: clamp(48px, 9vmin, 18vh);
+    max-width: clamp(48px, 9vmin, 18vh);
   }
 }
 
@@ -586,4 +575,373 @@ body {
   color: #2d2d2d;
   font-size: 1.1rem;
   max-width: 90%;
+}
+
+/* Card corner asset BL/BR; top corners just below couple, bottom corners at page bottom */
+.section-2__card-corners {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 75vh;
+  bottom: 0;
+  z-index: 11;
+  pointer-events: none;
+  overflow: visible;
+  padding: 6% 5%;
+  box-sizing: border-box;
+}
+
+/* Invitation content – centered in the card area (inset + margin auto for true vertical center) */
+.section-2__invitation {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  margin-top: 5vh;
+  width: calc(100% - 8rem);
+  max-width: 28rem;
+  height: fit-content;
+  max-height: 90%;
+  pointer-events: auto;
+  text-align: center;
+  padding: clamp(1rem, 3vw, 1.5rem) 0;
+  overflow: auto;
+}
+
+/* Desktop/tablet: push invitation text lower for better vertical centering in card */
+@media (min-width: 768px) {
+  .section-2__invitation {
+    margin-top: 11vh;
+  }
+}
+
+.section-2__invitation-head {
+  font-family: "Lato", sans-serif;
+  font-size: clamp(0.65rem, calc(2vw + 0.5rem), 0.95rem);
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: #ffd54f;
+  text-shadow: 0 0 20px rgba(255,213,79,0.5), 0 0 40px rgba(255,213,79,0.25), 0 2px 4px rgba(0,0,0,0.4);
+  margin: 0 0 0.75rem;
+}
+
+.section-2__invitation-intro {
+  font-family: "Lato", sans-serif;
+  font-size: clamp(0.6rem, calc(1.8vw + 0.4rem), 0.85rem);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f5f0e8;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
+  line-height: 1.5;
+  margin: 0 0 1.25rem;
+  max-width: 22em;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-2__invitation-names {
+  font-family: "Pacifico", cursive;
+  font-size: clamp(1.35rem, calc(5vw + 0.5rem), 2.5rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  text-shadow:
+    0 0 20px rgba(0,0,0,0.5),
+    0 2px 4px rgba(0,0,0,0.6),
+    0 4px 12px rgba(0,0,0,0.4),
+    0 1px 2px rgba(0,0,0,0.8);
+  margin: 0 0 0.4rem;
+  line-height: 1.3;
+}
+
+.section-2__invitation-amp {
+  display: inline-block;
+  margin: 0 0.2em;
+  font-size: 0.6em;
+  vertical-align: middle;
+  color: #ffd54f;
+  text-shadow: 0 0 20px rgba(255,213,79,0.6), 0 0 40px rgba(255,213,79,0.35), 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.section-2__invitation-sub {
+  font-family: "Lato", sans-serif;
+  font-size: clamp(0.65rem, calc(1.9vw + 0.35rem), 0.95rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #f5f0e8;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.25);
+  margin: 0 0 1.25rem;
+}
+
+.section-2__invitation-details {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin: 0 0 1rem;
+}
+
+.section-2__invitation-event {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.section-2__invitation-detail-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.section-2__invitation-label {
+  font-family: "Lato", sans-serif;
+  font-size: clamp(0.55rem, calc(1.6vw + 0.35rem), 0.8rem);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #ffd54f;
+  text-shadow: 0 0 12px rgba(255,213,79,0.4), 0 1px 3px rgba(0,0,0,0.4);
+  margin-bottom: 0.35rem;
+}
+
+.section-2__invitation-date,
+.section-2__invitation-time {
+  font-family: "Lato", sans-serif;
+  font-size: clamp(0.7rem, calc(2vw + 0.4rem), 1rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #f5f0e8;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.section-2__invitation-value {
+  font-family: "Lato", sans-serif;
+  font-size: clamp(0.75rem, calc(2vw + 0.45rem), 1.05rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #f5f0e8;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.section-2__invitation-event {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.section-2__invitation-event .section-2__invitation-date,
+.section-2__invitation-event .section-2__invitation-divider,
+.section-2__invitation-event .section-2__invitation-time {
+  display: inline-block;
+}
+
+.section-2__invitation-event .section-2__invitation-divider {
+  width: 1px;
+  height: 1em;
+  margin: 0 0.5rem;
+  vertical-align: middle;
+  background: rgba(245, 240, 232, 0.6);
+}
+
+.section-2__invitation-divider {
+  width: 1px;
+  min-height: 2rem;
+  height: 2.5rem;
+  background: rgba(245, 240, 232, 0.5);
+  flex-shrink: 0;
+}
+
+.section-2__invitation-venue {
+  font-family: "Lato", sans-serif;
+  font-size: clamp(0.7rem, calc(1.9vw + 0.4rem), 1rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #f5f0e8;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
+  margin: 0 0 1rem;
+}
+
+.section-2__invitation-address {
+  display: block;
+  font-size: 0.9em;
+  font-weight: 500;
+  margin-top: 0.35em;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+}
+
+.section-2__invitation-link {
+  color: #ffd54f;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(255,213,79,0.5), 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.section-2__invitation-link:hover {
+  color: #ffe082;
+  text-shadow: 0 0 20px rgba(255,213,79,0.7), 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.section-2__invitation-wishes {
+  font-family: "Lato", sans-serif;
+  font-size: clamp(0.55rem, calc(1.5vw + 0.35rem), 0.8rem);
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #f5f0e8;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.25);
+  margin: 0;
+}
+
+/* Desktop: larger invitation text */
+@media (min-width: 1024px) {
+  .section-2__invitation-head { font-size: 1.15rem; }
+  .section-2__invitation-intro { font-size: 1rem; }
+  .section-2__invitation-names { font-size: 2.85rem; }
+  .section-2__invitation-sub { font-size: 1.05rem; }
+  .section-2__invitation-label { font-size: 0.9rem; }
+  .section-2__invitation-date,
+  .section-2__invitation-time { font-size: 1.1rem; }
+  .section-2__invitation-value { font-size: 1.15rem; }
+  .section-2__invitation-venue { font-size: 1.1rem; }
+  .section-2__invitation-wishes { font-size: 0.9rem; }
+}
+
+/* Mobile: increased size (still smaller than desktop) */
+@media (max-width: 480px) {
+  .section-2__invitation-head { font-size: 0.75rem; }
+  .section-2__invitation-intro { font-size: 0.65rem; }
+  .section-2__invitation-names { font-size: 1.45rem; }
+  .section-2__invitation-sub { font-size: 0.7rem; }
+  .section-2__invitation-label { font-size: 0.6rem; }
+  .section-2__invitation-date,
+  .section-2__invitation-time { font-size: 0.75rem; }
+  .section-2__invitation-value { font-size: 0.8rem; }
+  .section-2__invitation-venue { font-size: 0.75rem; }
+  .section-2__invitation-wishes { font-size: 0.6rem; }
+}
+
+@media (max-width: 767px) and (min-width: 481px) {
+  .section-2__invitation-head { font-size: 0.9rem; }
+  .section-2__invitation-intro { font-size: 0.75rem; }
+  .section-2__invitation-names { font-size: 1.9rem; }
+  .section-2__invitation-sub { font-size: 0.85rem; }
+  .section-2__invitation-label { font-size: 0.7rem; }
+  .section-2__invitation-date,
+  .section-2__invitation-time { font-size: 0.9rem; }
+  .section-2__invitation-value { font-size: 0.95rem; }
+  .section-2__invitation-venue { font-size: 0.9rem; }
+  .section-2__invitation-wishes { font-size: 0.7rem; }
+}
+
+.section-2__card-corner {
+  position: absolute;
+  display: block;
+  height: clamp(72px, 12vmin, 28vh);
+  width: clamp(72px, 12vmin, 28vh);
+  max-height: clamp(72px, 12vmin, 28vh);
+  max-width: clamp(72px, 12vmin, 28vh);
+  object-fit: contain;
+  object-position: bottom center;
+}
+
+/* Bottom-left: BL asset as-is; inset matches container padding */
+.section-2__card-corner--bottom-left {
+  left: 0;
+  bottom: 0;
+  margin-bottom: 1.5rem;
+  margin-left: 1.5rem;
+  transform-origin: bottom left;
+  transform: none;
+}
+
+/* Bottom-right: BR asset as-is; inset matches container padding */
+.section-2__card-corner--bottom-right {
+  right: 0;
+  bottom: 0;
+  left: auto;
+  margin-bottom: 1.5rem;
+  margin-right: 1.5rem;
+  transform-origin: bottom right;
+  transform: none;
+}
+
+/* Top-left: BL asset flipped vertically */
+.section-2__card-corner--top-left {
+  left: 0;
+  top: 0;
+  margin-top: 1.5rem;
+  margin-left: 1.5rem;
+  transform-origin: top left;
+  transform: scaleY(-1);
+}
+
+/* Top-right: BR asset flipped vertically */
+.section-2__card-corner--top-right {
+  right: 0;
+  top: 0;
+  left: auto;
+  margin-top: 1.5rem;
+  margin-right: 1.5rem;
+  transform-origin: top right;
+  transform: scaleY(-1);
+}
+
+/* Floating music play/pause – bottom left */
+.music-toggle {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 1.25rem;
+  z-index: 100;
+  width: 3rem;
+  height: 3rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(201, 184, 150, 0.9);
+  color: #2d2d2d;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.music-toggle:hover {
+  background: rgba(221, 204, 170, 1);
+  transform: scale(1.05);
+}
+
+.music-toggle:focus {
+  outline: 2px solid rgba(201, 184, 150, 0.8);
+  outline-offset: 2px;
+}
+
+.music-toggle__icon {
+  font-size: 1rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.music-toggle.is-paused .music-toggle__icon {
+  font-size: 1.1rem;
+  letter-spacing: -0.05em;
+}
+
+@media (max-width: 480px) {
+  .music-toggle {
+    bottom: 1rem;
+    left: 1rem;
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .music-toggle__icon {
+    font-size: 0.95rem;
+  }
 }

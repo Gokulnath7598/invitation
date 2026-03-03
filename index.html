@@ -6,8 +6,8 @@
   <title>Gokul & Ramya – Wedding Invitation</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,600;0,700;1,400&family=Pacifico&display=swap" as="style" />
-  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,600;0,700;1,400&family=Pacifico&display=swap" rel="stylesheet" />
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,600;0,700;1,400&family=Pacifico&family=Playfair+Display:ital,wght@0,500;0,600;0,700&display=swap" as="style" />
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,600;0,700;1,400&family=Pacifico&family=Playfair+Display:ital,wght@0,500;0,600;0,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -87,7 +87,6 @@
       <div class="section-2__pattern" aria-hidden="true"></div>
       <div class="section-2__corner section-2__corner--left" aria-hidden="true"></div>
       <div class="section-2__corner section-2__corner--right" aria-hidden="true"></div>
-      <div class="section-2__shadow section-2__shadow--front" aria-hidden="true"></div>
       <div class="section-2__content">
         <!-- Content to be filled later -->
       </div>
@@ -96,7 +95,43 @@
       <img class="section-2__groom" src="assets/groom.png" alt="Groom" />
       <img class="section-2__bride" src="assets/bride.png" alt="Bride" />
     </div>
+    <div class="section-2__card-corners">
+      <img class="section-2__card-corner section-2__card-corner--top-left" src="assets/cardCornerBL.png" alt="" aria-hidden="true" />
+      <img class="section-2__card-corner section-2__card-corner--top-right" src="assets/cardCornerBR.png" alt="" aria-hidden="true" />
+      <img class="section-2__card-corner section-2__card-corner--bottom-left" src="assets/cardCornerBL.png" alt="" aria-hidden="true" />
+      <img class="section-2__card-corner section-2__card-corner--bottom-right" src="assets/cardCornerBR.png" alt="" aria-hidden="true" />
+      <div class="section-2__invitation">
+        <p class="section-2__invitation-head">SAVE THE DATE</p>
+        <p class="section-2__invitation-intro">You are cordially invited to celebrate the wedding of</p>
+        <p class="section-2__invitation-names">Gokul <span class="section-2__invitation-amp">&</span> Ramya</p>
+        <p class="section-2__invitation-sub">Gokulnath & Ramya Bharathi</p>
+        <div class="section-2__invitation-details">
+          <div class="section-2__invitation-event">
+            <span class="section-2__invitation-label">Reception</span>
+            <span class="section-2__invitation-date">May 17, 2025</span>
+            <span class="section-2__invitation-divider"></span>
+            <span class="section-2__invitation-time">6:00 – 9:00 PM</span>
+          </div>
+          <div class="section-2__invitation-event">
+            <span class="section-2__invitation-label">Marriage</span>
+            <span class="section-2__invitation-date">May 18, 2025</span>
+            <span class="section-2__invitation-divider"></span>
+            <span class="section-2__invitation-time">6:00 – 9:00 AM</span>
+          </div>
+        </div>
+        <p class="section-2__invitation-venue">Venue: <a class="section-2__invitation-link" href="https://maps.app.goo.gl/Ab2fkBW8jvnn1qGw9" target="_blank" rel="noopener noreferrer">Leaf Palace</a>, Tiruvannamalai<br /><span class="section-2__invitation-address">No. 63, 3A, Bypass X Road, Vengikkal, Tiruvannamalai, Tamil Nadu 606604</span></p>
+        <p class="section-2__invitation-wishes">With best wishes</p>
+      </div>
+    </div>
   </section>
+
+  <!-- Background music: play on play tap, pause on pause tap -->
+  <audio id="bgMusic" loop preload="auto" aria-label="Background music">
+    <source src="assets/bgSong.mp3" type="audio/mpeg" />
+  </audio>
+  <button type="button" class="music-toggle is-paused" id="musicToggle" aria-label="Play background music" title="Play music">
+    <span class="music-toggle__icon" aria-hidden="true">▶</span>
+  </button>
 
   <script src="script.js"></script>
 </body>

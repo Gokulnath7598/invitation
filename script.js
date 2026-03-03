@@ -1,9 +1,13 @@
 (function () {
   "use strict";
 
-  /* Section 1: mountain BG + temple, text, flowers. When progress >= 1, animations are "complete" (temple at max, etc.)
-   * but we still apply translateY from scroll so section 1 scrolls away and section 2 can take over – we only freeze the
-   * animation state, not the scroll position. */
+  /* On load/refresh: scroll to top and restart the page (fall animation from the beginning) */
+  if (typeof history !== "undefined" && "scrollRestoration" in history) {
+    history.scrollRestoration = "manual";
+  }
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
 
   var hero = document.getElementById("hero");
   var templeWrap = document.getElementById("templeWrap");
@@ -14,6 +18,10 @@
   var section2 = document.getElementById("section2");
 
   if (!hero || !templeWrap) return;
+
+  /* Ensure hero starts in drop-in state so the fall animation runs again */
+  hero.classList.remove("hero--loaded");
+  hero.classList.add("hero--drop-in");
 
   var mobileBreakpoint = 768;
   var scrollForFullVh = 55;  /* scroll over this many vh to complete section 1 */

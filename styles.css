@@ -549,7 +549,7 @@ body {
   width: auto;
   object-fit: contain;
   object-position: bottom center;
-  transition: transform 0.25s ease-out;
+  /* No transition: --couple-progress is driven by scroll; transition would lag behind section 1 */
 }
 
 .section-2__groom {

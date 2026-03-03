@@ -48,6 +48,11 @@
   var scrollRaf = null;
   var scrollScheduled = false;
   var lastCoupleProgress = -1;
+  var section1Frozen = false;
+  var refTranslateStart = 0;
+  var refVhAtFreeze = 0;
+  /** When frozen: section 2 top in viewport = refSection2TopZero - scrollY. Used so coupleProgress is derived from scrollY (same as section 1). */
+  var refSection2TopZero = 0;
 
   function runScrollUpdates() {
     scrollRaf = null;
@@ -56,13 +61,90 @@
     var scrollY = window.scrollY || window.pageYOffset;
     var viewportHeight = window.innerHeight;
     var isMobile = window.innerWidth < mobileBreakpoint;
+
     var thresholdPx = (scrollForFullVh / 100) * viewportHeight;
+    var translateStart = thresholdPx - 20;
+    var translateY = scrollY > translateStart ? -(scrollY - translateStart) : 0;
     var scrollVh = (scrollY / viewportHeight) * 100;
     var progress = Math.min(scrollVh / scrollForFullVh, 1);
 
-    /* translateY: moves section 1 content up as user scrolls past threshold, so section 1 scrolls away */
-    var translateStart = thresholdPx - 20;
-    var translateY = scrollY > translateStart ? -(scrollY - translateStart) : 0;
+    /* Section 2: compute first so we know if section 1 should freeze */
+    var coupleProgress = 0;
+    var s2Top = null;
+    var section2OutOfView = false;
+    if (section2) {
+      var rect = section2.getBoundingClientRect();
+      var top = rect.top;
+      s2Top = Math.round(top);
+      var start = viewportHeight;
+      var end = viewportHeight * 0.15;
+      coupleProgress = 1 - (top - end) / (start - end);
+      coupleProgress = Math.max(0, Math.min(1, coupleProgress));
+      coupleProgress = Math.round(coupleProgress * 100) / 100;
+      if (top < -50) coupleProgress = 1;
+      if (isMobile) {
+        if (top < viewportHeight * 0.95) {
+          document.body.classList.add("section-2-in-view");
+        } else {
+          document.body.classList.remove("section-2-in-view");
+        }
+      } else {
+        document.body.classList.remove("section-2-in-view");
+      }
+      /* Freeze section 1 only when section 2 has started AND section 1 animation is complete (progress >= 1).
+         This avoids a jump: we were freezing when s2Top < vh but translateY was still 0, so we applied 0 to
+         all layers while the anim path had temple/flowers at non-zero offsets. */
+      if (top < viewportHeight && progress >= 1 && !section1Frozen) {
+        section1Frozen = true;
+        refTranslateStart = Math.round(translateStart);
+        refVhAtFreeze = viewportHeight;
+        refSection2TopZero = scrollY + top;
+      }
+      if (top >= viewportHeight) section1Frozen = false;
+      section2OutOfView = top >= viewportHeight;
+    }
+
+    /* Use frozen formula only when section 1 is actually frozen (section 2 in view and anim complete).
+       When user scrolls back up and section 2 is out of view, we use the anim branch so section 1
+       animates in reverse (temple shrinks, title moves up, flowers move back). */
+    if (section1Frozen) {
+      /* Use fractional px so section 1 moves exactly 1:1 with scroll (no rounding bounce) */
+      var frozenTranslateY = scrollY > refTranslateStart ? -(scrollY - refTranslateStart) : 0;
+      var flowersOffsetPx = 0.1 * refVhAtFreeze;
+      /* Derive coupleProgress from scrollY so section 2 content stays in phase with section 1 (avoids getBoundingClientRect layout lag) */
+      if (section2 && refSection2TopZero > 0) {
+        var startF = refVhAtFreeze;
+        var endF = refVhAtFreeze * 0.15;
+        var topFromScroll = refSection2TopZero - scrollY;
+        coupleProgress = 1 - (topFromScroll - endF) / (startF - endF);
+        coupleProgress = Math.max(0, Math.min(1, coupleProgress));
+      }
+      if (hero) hero.classList.add("hero--section1-frozen");
+      var heights = getTempleHeights();
+      if (titleLayer) {
+        titleLayer.style.setProperty("--title-top", titleTopEnd + "%");
+        titleLayer.style.transition = "none";
+        titleLayer.style.transform = "translateY(-50%) translateY(" + frozenTranslateY + "px)";
+      }
+      templeWrap.style.setProperty("--temple-height", heights.max + "vh");
+      templeWrap.style.transform = "translateY(" + frozenTranslateY + "px)";
+      templeWrap.style.transition = "none";
+      if (flowersLayer) {
+        flowersLayer.style.transition = "none";
+        flowersLayer.style.transform = "translateY(" + (frozenTranslateY + flowersOffsetPx) + "px)";
+      }
+      if (flowersInner) flowersInner.style.transform = "translateY(0)";
+      if (flowersTitleGroup) flowersTitleGroup.style.transform = "translateY(0)";
+      var mountains = document.querySelector(".hero__mountains");
+      if (mountains) mountains.style.transform = "translateY(" + frozenTranslateY + "px)";
+      if (section2 && coupleProgress !== lastCoupleProgress) {
+        lastCoupleProgress = coupleProgress;
+        section2.style.setProperty("--couple-progress", coupleProgress);
+      }
+      return;
+    }
+
+    if (hero) hero.classList.remove("hero--section1-frozen");
 
     /* Animation state: freeze at 1 when complete (temple max, title at end); still use real translateY so hero scrolls away */
     var animProgress = progress < 1 ? progress : 1;
@@ -97,30 +179,9 @@
     if (flowersTitleGroup) flowersTitleGroup.style.transform = "translateY(0)";
     var mountains = document.querySelector(".hero__mountains");
     if (mountains) mountains.style.transform = "translateY(" + mountainsTranslateY + "px)";
-
-    /* Section 2 */
-    if (section2) {
-      var rect = section2.getBoundingClientRect();
-      var top = rect.top;
-      var start = viewportHeight;
-      var end = viewportHeight * 0.15;
-      var coupleProgress = 1 - (top - end) / (start - end);
-      coupleProgress = Math.max(0, Math.min(1, coupleProgress));
-      coupleProgress = Math.round(coupleProgress * 100) / 100;
-      if (top < -50) coupleProgress = 1;
-      if (coupleProgress !== lastCoupleProgress) {
-        lastCoupleProgress = coupleProgress;
-        section2.style.setProperty("--couple-progress", coupleProgress);
-      }
-      if (isMobile) {
-        if (top < viewportHeight * 0.95) {
-          document.body.classList.add("section-2-in-view");
-        } else {
-          document.body.classList.remove("section-2-in-view");
-        }
-      } else {
-        document.body.classList.remove("section-2-in-view");
-      }
+    if (section2 && coupleProgress !== lastCoupleProgress) {
+      lastCoupleProgress = coupleProgress;
+      section2.style.setProperty("--couple-progress", coupleProgress);
     }
   }
 

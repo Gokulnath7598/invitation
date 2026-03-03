@@ -945,3 +945,52 @@ body {
     font-size: 0.95rem;
   }
 }
+
+/* Floating venue (map) button – bottom right */
+.venue-float {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.25rem;
+  z-index: 100;
+  width: 3rem;
+  height: 3rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(201, 184, 150, 0.9);
+  color: #2d2d2d;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  transition: background 0.2s ease, transform 0.2s ease;
+  text-decoration: none;
+}
+
+.venue-float:hover {
+  background: rgba(221, 204, 170, 1);
+  transform: scale(1.05);
+}
+
+.venue-float:focus {
+  outline: 2px solid rgba(201, 184, 150, 0.8);
+  outline-offset: 2px;
+}
+
+.venue-float__icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .venue-float {
+    bottom: 1rem;
+    right: 1rem;
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .venue-float__icon {
+    font-size: 1.1rem;
+  }
+}

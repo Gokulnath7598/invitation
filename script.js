@@ -105,6 +105,8 @@
     scrollScheduled = false;
 
     var scrollY = window.scrollY || window.pageYOffset;
+    /* iOS (and some Android) overscroll bounce can report negative scrollY at the top; clamp to avoid broken layout */
+    scrollY = Math.max(0, scrollY);
     var viewportHeight = window.innerHeight;
     var isMobile = window.innerWidth < mobileBreakpoint;
 

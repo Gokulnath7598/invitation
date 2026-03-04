@@ -21,13 +21,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Reduce rubber-band on mobile only so desktop scroll is unchanged */
-@media (max-width: 767px) {
-  html, body {
-    overscroll-behavior-y: none;
-  }
-}
-
 /* Hero: tall section; BG fixed until temple bottom reaches viewport bottom, then BG scrolls */
 .hero {
   position: relative;

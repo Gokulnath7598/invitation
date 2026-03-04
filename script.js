@@ -2,7 +2,7 @@
   "use strict";
 
   /* ---- Debug logger: app init → positioning/scroll (for mobile debugging) ---- */
-  var DEBUG_VERSION = "scroll-v5-2024-03-04";
+  var DEBUG_VERSION = "scroll-v6-2024-03-04";
   var DEBUG_MAX_LINES = 600;
   var DEBUG_SCROLL_THROTTLE_MS = 180;
   var debugLines = [];
@@ -133,9 +133,11 @@
     var thresholdPx = (scrollForFullVh / 100) * layoutVh;
     var translateStart = thresholdPx - 20;
     var translateY = scrollY > translateStart ? -(scrollY - translateStart) : 0;
-    /* Use refVhAtFreeze for band end so band doesn't change when vh changes (address bar). */
+    /* Band end: section2 just went out when scrollY <= refSection2TopZero - vh. Use min(vh, refVh) so band is non-empty when refVh > current vh. */
     var unfreezeBandEnd = refSection2TopZero > 0
-      ? (refVhAtFreeze > 0 ? refSection2TopZero - refVhAtFreeze : refSection2TopZero - viewportHeight)
+      ? (refVhAtFreeze > 0
+          ? refSection2TopZero - Math.min(viewportHeight, refVhAtFreeze)
+          : refSection2TopZero - viewportHeight)
       : -1;
     var inUnfreezeBand = refTranslateStart > 0 && scrollY >= translateStart && scrollY <= unfreezeBandEnd;
     if (inUnfreezeBand) {

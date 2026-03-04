@@ -99,6 +99,8 @@
   /** When frozen: section 2 top in viewport = refSection2TopZero - scrollY. Used so coupleProgress is derived from scrollY (same as section 1). */
   var refSection2TopZero = 0;
   var firstScrollLogged = false;
+  /** Smoothed translateY to avoid jump when scrollY leaps at unfreeze (e.g. vh change). */
+  var lastAppliedTranslateY = 0;
 
   function runScrollUpdates() {
     scrollRaf = null;
@@ -123,12 +125,22 @@
     var translateY = scrollY > translateStart ? -(scrollY - translateStart) : 0;
     /* After unfreeze, vh can be smaller than refVhAtFreeze (mobile chrome hid). Use frozen baseline for all scrollY where we could have just unfrozen (section2 just went out of view) so hero doesn't jump. */
     var unfreezeBandEnd = refSection2TopZero > 0 ? refSection2TopZero - viewportHeight : -1;
-    if (refTranslateStart > 0 && scrollY >= translateStart && scrollY <= unfreezeBandEnd) {
+    var inUnfreezeBand = refTranslateStart > 0 && scrollY >= translateStart && scrollY <= unfreezeBandEnd;
+    if (inUnfreezeBand) {
       translateY = -(scrollY - refTranslateStart);
+      /* Cap change per frame so when scrollY leaps (e.g. 672→400) we don't jump 272px in one frame */
+      var maxTranslateDeltaPerFrame = 80;
+      var diff = translateY - lastAppliedTranslateY;
+      if (Math.abs(diff) > maxTranslateDeltaPerFrame) {
+        translateY = lastAppliedTranslateY + (diff > 0 ? maxTranslateDeltaPerFrame : -maxTranslateDeltaPerFrame);
+      }
+      lastAppliedTranslateY = translateY;
     } else if (scrollY > translateStart) {
       translateY = -(scrollY - translateStart);
+      lastAppliedTranslateY = translateY;
     } else {
       translateY = 0;
+      lastAppliedTranslateY = translateY;
     }
     var scrollVh = (scrollY / viewportHeight) * 100;
     var progress = Math.min(scrollVh / scrollForFullVh, 1);
@@ -210,6 +222,7 @@
         lastCoupleProgress = coupleProgress;
         section2.style.setProperty("--couple-progress", coupleProgress);
       }
+      lastAppliedTranslateY = frozenTranslateY;
       var now = Date.now();
       if (now - debugScrollLogTime >= DEBUG_SCROLL_THROTTLE_MS) {
         debugScrollLogTime = now;
@@ -219,6 +232,38 @@
     }
 
     if (hero) hero.classList.remove("hero--section1-frozen");
+
+    /* In the unfreeze band use frozen-style layout (temple max, title end, same transforms) so only translateY changes smoothly – avoids shape jump + black gap */
+    if (inUnfreezeBand) {
+      var heights = getTempleHeights();
+      var flowersOffsetPxBand = 0.1 * (refVhAtFreeze || viewportHeight);
+      if (titleLayer) {
+        titleLayer.style.setProperty("--title-top", titleTopEnd + "%");
+        titleLayer.style.transition = "none";
+        titleLayer.style.transform = "translateY(-50%) translateY(" + translateY + "px)";
+      }
+      templeWrap.style.setProperty("--temple-height", heights.max + "vh");
+      templeWrap.style.transform = "translateY(" + translateY + "px)";
+      templeWrap.style.transition = "none";
+      if (flowersLayer) {
+        flowersLayer.style.transition = "none";
+        flowersLayer.style.transform = "translateY(" + (translateY + flowersOffsetPxBand) + "px)";
+      }
+      if (flowersInner) flowersInner.style.transform = "translateY(0)";
+      if (flowersTitleGroup) flowersTitleGroup.style.transform = "translateY(0)";
+      var mountainsBand = document.querySelector(".hero__mountains");
+      if (mountainsBand) mountainsBand.style.transform = "translateY(" + translateY + "px)";
+      if (section2 && coupleProgress !== lastCoupleProgress) {
+        lastCoupleProgress = coupleProgress;
+        section2.style.setProperty("--couple-progress", coupleProgress);
+      }
+      var now = Date.now();
+      if (now - debugScrollLogTime >= DEBUG_SCROLL_THROTTLE_MS) {
+        debugScrollLogTime = now;
+        debugLog("SCROLL", "scrollY=" + scrollY + " vh=" + viewportHeight + " w=" + window.innerWidth + " isMobile=" + isMobile + " progress=" + progress.toFixed(3) + " frozen=0 band=1 translateY=" + Math.round(translateY) + " lastApplied=" + Math.round(lastAppliedTranslateY));
+      }
+      return;
+    }
 
     /* Animation state: freeze at 1 when complete (temple max, title at end); still use real translateY so hero scrolls away */
     var animProgress = progress < 1 ? progress : 1;
@@ -257,6 +302,7 @@
       lastCoupleProgress = coupleProgress;
       section2.style.setProperty("--couple-progress", coupleProgress);
     }
+    lastAppliedTranslateY = translateY;
     var now = Date.now();
     if (now - debugScrollLogTime >= DEBUG_SCROLL_THROTTLE_MS) {
       debugScrollLogTime = now;

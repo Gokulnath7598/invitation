@@ -2,7 +2,7 @@
   "use strict";
 
   /* ---- Debug logger: app init → positioning/scroll (for mobile debugging) ---- */
-  var DEBUG_VERSION = "scroll-v4-2024-03-04";
+  var DEBUG_VERSION = "scroll-v5-2024-03-04";
   var DEBUG_MAX_LINES = 600;
   var DEBUG_SCROLL_THROTTLE_MS = 180;
   var debugLines = [];
@@ -103,6 +103,8 @@
   /** Smoothed translateY to avoid jump when scrollY leaps at unfreeze (e.g. vh change). */
   var lastAppliedTranslateY = 0;
   var lastScrollUpdateTime = 0;
+  /** On mobile: max vh seen, so section 1 doesn't resize when address bar shows/hides. */
+  var stableVh = 0;
 
   function runScrollUpdates() {
     scrollRaf = null;
@@ -122,12 +124,19 @@
     }
     var viewportHeight = window.innerHeight;
     var isMobile = window.innerWidth < mobileBreakpoint;
+    if (isMobile) {
+      if (stableVh === 0) stableVh = viewportHeight;
+      else stableVh = Math.max(stableVh, viewportHeight);
+    }
+    var layoutVh = isMobile ? stableVh : viewportHeight;
 
-    var thresholdPx = (scrollForFullVh / 100) * viewportHeight;
+    var thresholdPx = (scrollForFullVh / 100) * layoutVh;
     var translateStart = thresholdPx - 20;
     var translateY = scrollY > translateStart ? -(scrollY - translateStart) : 0;
-    /* After unfreeze, vh can be smaller than refVhAtFreeze (mobile chrome hid). Use frozen baseline for all scrollY where we could have just unfrozen (section2 just went out of view) so hero doesn't jump. */
-    var unfreezeBandEnd = refSection2TopZero > 0 ? refSection2TopZero - viewportHeight : -1;
+    /* Use refVhAtFreeze for band end so band doesn't change when vh changes (address bar). */
+    var unfreezeBandEnd = refSection2TopZero > 0
+      ? (refVhAtFreeze > 0 ? refSection2TopZero - refVhAtFreeze : refSection2TopZero - viewportHeight)
+      : -1;
     var inUnfreezeBand = refTranslateStart > 0 && scrollY >= translateStart && scrollY <= unfreezeBandEnd;
     if (inUnfreezeBand) {
       translateY = -(scrollY - refTranslateStart);
@@ -145,7 +154,7 @@
       translateY = 0;
       lastAppliedTranslateY = translateY;
     }
-    var scrollVh = (scrollY / viewportHeight) * 100;
+    var scrollVh = (scrollY / layoutVh) * 100;
     var progress = Math.min(scrollVh / scrollForFullVh, 1);
 
     /* Section 2: compute first so we know if section 1 should freeze */
@@ -267,7 +276,7 @@
       lastScrollUpdateTime = nowMs;
       if (nowMs - debugScrollLogTime >= DEBUG_SCROLL_THROTTLE_MS) {
         debugScrollLogTime = nowMs;
-        debugLog("SCROLL", "scrollY=" + scrollY + " vh=" + viewportHeight + " refVh=" + refVhAtFreeze + " bandEnd=" + unfreezeBandEnd + " frozen=0 band=1 translateY=" + Math.round(translateY) + " lastApplied=" + Math.round(lastAppliedTranslateY) + " lerpTarget=" + Math.round(-(scrollY - refTranslateStart)));
+        debugLog("SCROLL", "scrollY=" + scrollY + " vh=" + viewportHeight + (layoutVh !== viewportHeight ? " layoutVh=" + layoutVh : "") + " refVh=" + refVhAtFreeze + " bandEnd=" + unfreezeBandEnd + " frozen=0 band=1 translateY=" + Math.round(translateY) + " lastApplied=" + Math.round(lastAppliedTranslateY) + " lerpTarget=" + Math.round(-(scrollY - refTranslateStart)));
       }
       return;
     }
@@ -275,14 +284,15 @@
     /* Animation state: freeze at 1 when complete (temple max, title at end); still use real translateY so hero scrolls away */
     var animProgress = progress < 1 ? progress : 1;
     var useTransition = !hero || !hero.classList.contains("hero--loaded");
-    var flowersLiftPx = 0.1 * viewportHeight;
-    var flowersMoveDownPx = animProgress * 0.2 * viewportHeight;
+    var layoutVhAnim = isMobile ? layoutVh : viewportHeight;
+    var flowersLiftPx = 0.1 * layoutVhAnim;
+    var flowersMoveDownPx = animProgress * 0.2 * layoutVhAnim;
     var heights = getTempleHeights();
     var heightVh = animProgress < 1
       ? heights.initial + (heights.max - heights.initial) * animProgress
       : heights.max;
 
-    var templeTranslateY = Math.round((1 - animProgress) * 0.15 * viewportHeight + translateY);
+    var templeTranslateY = Math.round((1 - animProgress) * 0.15 * layoutVhAnim + translateY);
     var flowersTranslateY = Math.round(-flowersLiftPx + flowersMoveDownPx + translateY);
     var mountainsTranslateY = Math.round(translateY);
     var titleTranslateY = Math.round(translateY);
@@ -294,7 +304,8 @@
       titleLayer.style.transition = useTransition ? "" : "none";
       titleLayer.style.transform = "translateY(-50%) translateY(" + titleTranslateY + "px)";
     }
-    templeWrap.style.setProperty("--temple-height", heightVh + "vh");
+    if (isMobile) templeWrap.style.setProperty("--temple-height", ((heightVh / 100) * layoutVhAnim) + "px");
+    else templeWrap.style.setProperty("--temple-height", heightVh + "vh");
     templeWrap.style.transform = "translateY(" + templeTranslateY + "px)";
     templeWrap.style.transition = "none";
     if (flowersLayer) {

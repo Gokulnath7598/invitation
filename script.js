@@ -101,11 +101,13 @@
   var firstScrollLogged = false;
   /** Smoothed translateY to avoid jump when scrollY leaps at unfreeze (e.g. vh change). */
   var lastAppliedTranslateY = 0;
+  var lastScrollUpdateTime = 0;
 
   function runScrollUpdates() {
     scrollRaf = null;
     scrollScheduled = false;
 
+    var nowMs = Date.now();
     var scrollY = window.scrollY || window.pageYOffset;
     /* iOS (and some Android) overscroll bounce can report negative scrollY at the top; clamp to avoid broken layout */
     if (scrollY < 0) {
@@ -128,12 +130,12 @@
     var inUnfreezeBand = refTranslateStart > 0 && scrollY >= translateStart && scrollY <= unfreezeBandEnd;
     if (inUnfreezeBand) {
       translateY = -(scrollY - refTranslateStart);
-      /* Cap change per frame so when scrollY leaps (e.g. 672→400) we don't jump 272px in one frame */
-      var maxTranslateDeltaPerFrame = 80;
-      var diff = translateY - lastAppliedTranslateY;
-      if (Math.abs(diff) > maxTranslateDeltaPerFrame) {
-        translateY = lastAppliedTranslateY + (diff > 0 ? maxTranslateDeltaPerFrame : -maxTranslateDeltaPerFrame);
-      }
+      /* Time-based lerp: smooth towards target so touch/momentum scroll jumps don't cause a visible jump */
+      var dt = lastScrollUpdateTime > 0 ? Math.min((nowMs - lastScrollUpdateTime) / 16, 3) : 1;
+      lastScrollUpdateTime = nowMs;
+      var lerpFactor = isMobile ? 0.2 : 0.35;
+      var smooth = lastAppliedTranslateY + (translateY - lastAppliedTranslateY) * lerpFactor * dt;
+      translateY = Math.abs(smooth - translateY) < 1 ? translateY : smooth;
       lastAppliedTranslateY = translateY;
     } else if (scrollY > translateStart) {
       translateY = -(scrollY - translateStart);
@@ -223,9 +225,9 @@
         section2.style.setProperty("--couple-progress", coupleProgress);
       }
       lastAppliedTranslateY = frozenTranslateY;
-      var now = Date.now();
-      if (now - debugScrollLogTime >= DEBUG_SCROLL_THROTTLE_MS) {
-        debugScrollLogTime = now;
+      lastScrollUpdateTime = nowMs;
+      if (nowMs - debugScrollLogTime >= DEBUG_SCROLL_THROTTLE_MS) {
+        debugScrollLogTime = nowMs;
         debugLog("SCROLL", "scrollY=" + scrollY + " vh=" + viewportHeight + " w=" + window.innerWidth + " isMobile=" + isMobile + " progress=" + progress.toFixed(3) + " frozen=1 coupleProgress=" + coupleProgress + " s2Top=" + (s2Top != null ? s2Top : "n/a") + " frozenTranslateY=" + Math.round(frozenTranslateY));
       }
       return;
@@ -257,9 +259,9 @@
         lastCoupleProgress = coupleProgress;
         section2.style.setProperty("--couple-progress", coupleProgress);
       }
-      var now = Date.now();
-      if (now - debugScrollLogTime >= DEBUG_SCROLL_THROTTLE_MS) {
-        debugScrollLogTime = now;
+      lastScrollUpdateTime = nowMs;
+      if (nowMs - debugScrollLogTime >= DEBUG_SCROLL_THROTTLE_MS) {
+        debugScrollLogTime = nowMs;
         debugLog("SCROLL", "scrollY=" + scrollY + " vh=" + viewportHeight + " w=" + window.innerWidth + " isMobile=" + isMobile + " progress=" + progress.toFixed(3) + " frozen=0 band=1 translateY=" + Math.round(translateY) + " lastApplied=" + Math.round(lastAppliedTranslateY));
       }
       return;
@@ -303,9 +305,9 @@
       section2.style.setProperty("--couple-progress", coupleProgress);
     }
     lastAppliedTranslateY = translateY;
-    var now = Date.now();
-    if (now - debugScrollLogTime >= DEBUG_SCROLL_THROTTLE_MS) {
-      debugScrollLogTime = now;
+    lastScrollUpdateTime = nowMs;
+    if (nowMs - debugScrollLogTime >= DEBUG_SCROLL_THROTTLE_MS) {
+      debugScrollLogTime = nowMs;
       debugLog("SCROLL", "scrollY=" + scrollY + " vh=" + viewportHeight + " w=" + window.innerWidth + " isMobile=" + isMobile + " progress=" + progress.toFixed(3) + " frozen=0 coupleProgress=" + coupleProgress + " s2Top=" + (s2Top != null ? s2Top : "n/a") + " translateY=" + Math.round(translateY) + " thresholdPx=" + Math.round(thresholdPx) + " heightVh=" + heightVh + " templeTy=" + templeTranslateY + " flowersTy=" + flowersTranslateY + " titleTy=" + titleTranslateY);
     }
   }

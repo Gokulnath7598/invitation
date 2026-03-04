@@ -121,8 +121,9 @@
     var thresholdPx = (scrollForFullVh / 100) * viewportHeight;
     var translateStart = thresholdPx - 20;
     var translateY = scrollY > translateStart ? -(scrollY - translateStart) : 0;
-    /* After unfreeze, vh can be smaller than refVhAtFreeze (e.g. mobile chrome hid). Use refTranslateStart in the overlap band so hero doesn't jump. */
-    if (refTranslateStart > 0 && scrollY >= translateStart && scrollY <= refTranslateStart) {
+    /* After unfreeze, vh can be smaller than refVhAtFreeze (mobile chrome hid). Use frozen baseline for all scrollY where we could have just unfrozen (section2 just went out of view) so hero doesn't jump. */
+    var unfreezeBandEnd = refSection2TopZero > 0 ? refSection2TopZero - viewportHeight : -1;
+    if (refTranslateStart > 0 && scrollY >= translateStart && scrollY <= unfreezeBandEnd) {
       translateY = -(scrollY - refTranslateStart);
     } else if (scrollY > translateStart) {
       translateY = -(scrollY - translateStart);

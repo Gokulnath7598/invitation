@@ -106,13 +106,29 @@
 
     var scrollY = window.scrollY || window.pageYOffset;
     /* iOS (and some Android) overscroll bounce can report negative scrollY at the top; clamp to avoid broken layout */
-    scrollY = Math.max(0, scrollY);
+    if (scrollY < 0) {
+      scrollY = 0;
+      /* Nudge document back to 0 so we don't sit in overscroll (reduces blank gap) */
+      if (typeof window.requestAnimationFrame !== "undefined") {
+        requestAnimationFrame(function () { window.scrollTo(0, 0); });
+      } else {
+        window.scrollTo(0, 0);
+      }
+    }
     var viewportHeight = window.innerHeight;
     var isMobile = window.innerWidth < mobileBreakpoint;
 
     var thresholdPx = (scrollForFullVh / 100) * viewportHeight;
     var translateStart = thresholdPx - 20;
     var translateY = scrollY > translateStart ? -(scrollY - translateStart) : 0;
+    /* After unfreeze, vh can be smaller than refVhAtFreeze (e.g. mobile chrome hid). Use refTranslateStart in the overlap band so hero doesn't jump. */
+    if (refTranslateStart > 0 && scrollY >= translateStart && scrollY <= refTranslateStart) {
+      translateY = -(scrollY - refTranslateStart);
+    } else if (scrollY > translateStart) {
+      translateY = -(scrollY - translateStart);
+    } else {
+      translateY = 0;
+    }
     var scrollVh = (scrollY / viewportHeight) * 100;
     var progress = Math.min(scrollVh / scrollForFullVh, 1);
 
@@ -250,7 +266,8 @@
   function scheduleScrollUpdate() {
     if (!firstScrollLogged) {
       firstScrollLogged = true;
-      debugLog("SCROLL", "first scroll event scrollY=" + (window.scrollY || window.pageYOffset));
+      var raw = window.scrollY || window.pageYOffset;
+      debugLog("SCROLL", "first scroll event scrollY=" + raw + (raw < 0 ? " (will clamp to 0)" : ""));
     }
     if (scrollScheduled) return;
     scrollScheduled = true;

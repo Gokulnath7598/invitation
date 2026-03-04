@@ -2,6 +2,7 @@
   "use strict";
 
   /* ---- Debug logger: app init → positioning/scroll (for mobile debugging) ---- */
+  var DEBUG_VERSION = "scroll-v4-2024-03-04";
   var DEBUG_MAX_LINES = 600;
   var DEBUG_SCROLL_THROTTLE_MS = 180;
   var debugLines = [];
@@ -36,7 +37,7 @@
     }
   }
 
-  debugLog("INIT", "script start | UA=" + (navigator.userAgent || "").substring(0, 80));
+  debugLog("INIT", "version=" + DEBUG_VERSION + " | UA=" + (navigator.userAgent || "").substring(0, 60));
   debugLog("INIT", "viewport meta: " + (document.querySelector('meta[name="viewport"]') ? document.querySelector('meta[name="viewport"]').getAttribute("content") : "none"));
 
   /* On load/refresh: scroll to top and restart the page (fall animation from the beginning) */
@@ -204,12 +205,14 @@
       }
       if (hero) hero.classList.add("hero--section1-frozen");
       var heights = getTempleHeights();
+      /* Use px from refVhAtFreeze so temple doesn't resize when address bar shows/hides (vh change) */
+      var templeHeightPx = (heights.max / 100) * refVhAtFreeze;
+      templeWrap.style.setProperty("--temple-height", templeHeightPx + "px");
       if (titleLayer) {
         titleLayer.style.setProperty("--title-top", titleTopEnd + "%");
         titleLayer.style.transition = "none";
         titleLayer.style.transform = "translateY(-50%) translateY(" + frozenTranslateY + "px)";
       }
-      templeWrap.style.setProperty("--temple-height", heights.max + "vh");
       templeWrap.style.transform = "translateY(" + frozenTranslateY + "px)";
       templeWrap.style.transition = "none";
       if (flowersLayer) {
@@ -239,12 +242,14 @@
     if (inUnfreezeBand) {
       var heights = getTempleHeights();
       var flowersOffsetPxBand = 0.1 * (refVhAtFreeze || viewportHeight);
+      /* Use px from refVhAtFreeze so temple doesn't resize when vh changes */
+      var templeHeightPxBand = (heights.max / 100) * (refVhAtFreeze || viewportHeight);
       if (titleLayer) {
         titleLayer.style.setProperty("--title-top", titleTopEnd + "%");
         titleLayer.style.transition = "none";
         titleLayer.style.transform = "translateY(-50%) translateY(" + translateY + "px)";
       }
-      templeWrap.style.setProperty("--temple-height", heights.max + "vh");
+      templeWrap.style.setProperty("--temple-height", templeHeightPxBand + "px");
       templeWrap.style.transform = "translateY(" + translateY + "px)";
       templeWrap.style.transition = "none";
       if (flowersLayer) {
@@ -262,7 +267,7 @@
       lastScrollUpdateTime = nowMs;
       if (nowMs - debugScrollLogTime >= DEBUG_SCROLL_THROTTLE_MS) {
         debugScrollLogTime = nowMs;
-        debugLog("SCROLL", "scrollY=" + scrollY + " vh=" + viewportHeight + " w=" + window.innerWidth + " isMobile=" + isMobile + " progress=" + progress.toFixed(3) + " frozen=0 band=1 translateY=" + Math.round(translateY) + " lastApplied=" + Math.round(lastAppliedTranslateY));
+        debugLog("SCROLL", "scrollY=" + scrollY + " vh=" + viewportHeight + " refVh=" + refVhAtFreeze + " bandEnd=" + unfreezeBandEnd + " frozen=0 band=1 translateY=" + Math.round(translateY) + " lastApplied=" + Math.round(lastAppliedTranslateY) + " lerpTarget=" + Math.round(-(scrollY - refTranslateStart)));
       }
       return;
     }
@@ -326,7 +331,7 @@
 
   window.addEventListener("scroll", scheduleScrollUpdate, { passive: true });
   window.addEventListener("resize", function () {
-    debugLog("RESIZE", "innerWidth=" + window.innerWidth + " innerHeight=" + window.innerHeight + " scrollY=" + (window.scrollY || window.pageYOffset));
+    debugLog("RESIZE", "w=" + window.innerWidth + " h=" + window.innerHeight + " scrollY=" + (window.scrollY || window.pageYOffset) + " frozen=" + section1Frozen + " refVh=" + refVhAtFreeze + " refTxStart=" + refTranslateStart);
     scrollScheduled = false;
     runScrollUpdates();
   });

@@ -1,6 +1,44 @@
 (function () {
   "use strict";
 
+  /* ---- Debug logger: app init → positioning/scroll (for mobile debugging) ---- */
+  var DEBUG_MAX_LINES = 600;
+  var DEBUG_SCROLL_THROTTLE_MS = 180;
+  var debugLines = [];
+  var debugScrollLogTime = 0;
+
+  function debugLog(cat, msg) {
+    var ts = new Date().toISOString();
+    var line = ts + " [" + cat + "] " + msg;
+    debugLines.push(line);
+    if (debugLines.length > DEBUG_MAX_LINES) debugLines.shift();
+  }
+
+  function debugGetText() {
+    return debugLines.join("\n") || "[No logs yet]";
+  }
+
+  function debugCopy() {
+    var btn = document.getElementById("debugLogsCopy");
+    var text = debugGetText();
+    var label = btn && btn.querySelector(".debug-logs-copy__label");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        if (label) label.textContent = "Copied!";
+        setTimeout(function () { if (label) label.textContent = "Copy logs"; }, 2000);
+      }).catch(function () {
+        if (label) label.textContent = "Copy failed";
+        setTimeout(function () { if (label) label.textContent = "Copy logs"; }, 2000);
+      });
+    } else {
+      if (label) label.textContent = "Copy failed";
+      setTimeout(function () { if (label) label.textContent = "Copy logs"; }, 2000);
+    }
+  }
+
+  debugLog("INIT", "script start | UA=" + (navigator.userAgent || "").substring(0, 80));
+  debugLog("INIT", "viewport meta: " + (document.querySelector('meta[name="viewport"]') ? document.querySelector('meta[name="viewport"]').getAttribute("content") : "none"));
+
   /* On load/refresh: scroll to top and restart the page (fall animation from the beginning) */
   if (typeof history !== "undefined" && "scrollRestoration" in history) {
     history.scrollRestoration = "manual";
@@ -8,6 +46,7 @@
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
+  debugLog("INIT", "scrollTo(0,0) done | scrollY=" + (window.scrollY || window.pageYOffset) + " docEl.scrollTop=" + document.documentElement.scrollTop + " body.scrollTop=" + document.body.scrollTop);
 
   var hero = document.getElementById("hero");
   var templeWrap = document.getElementById("templeWrap");
@@ -17,11 +56,15 @@
   var flowersTitleGroup = document.querySelector(".hero__flowers-title-group");
   var section2 = document.getElementById("section2");
 
-  if (!hero || !templeWrap) return;
+  if (!hero || !templeWrap) {
+    debugLog("INIT", "ABORT: missing hero or templeWrap");
+    return;
+  }
 
   /* Ensure hero starts in drop-in state so the fall animation runs again */
   hero.classList.remove("hero--loaded");
   hero.classList.add("hero--drop-in");
+  debugLog("INIT", "hero state: hero--drop-in set");
 
   var mobileBreakpoint = 768;
   var scrollForFullVh = 55;  /* scroll over this many vh to complete section 1 */
@@ -40,10 +83,12 @@
 
   /* Initial hero state */
   var h0 = getTempleHeights();
+  var vh0 = window.innerHeight || 600;
   templeWrap.style.setProperty("--temple-height", h0.initial + "vh");
-  var initialRisePx = 0.15 * (window.innerHeight || 600);
+  var initialRisePx = 0.15 * vh0;
   templeWrap.style.transform = "translateY(" + initialRisePx + "px)";
   templeWrap.style.transition = "none";
+  debugLog("INIT", "innerWidth=" + window.innerWidth + " innerHeight=" + vh0 + " isMobile=" + (window.innerWidth < mobileBreakpoint) + " templeHeights=" + h0.initial + "vh/" + h0.max + "vh initialRisePx=" + initialRisePx);
 
   var scrollRaf = null;
   var scrollScheduled = false;
@@ -53,6 +98,7 @@
   var refVhAtFreeze = 0;
   /** When frozen: section 2 top in viewport = refSection2TopZero - scrollY. Used so coupleProgress is derived from scrollY (same as section 1). */
   var refSection2TopZero = 0;
+  var firstScrollLogged = false;
 
   function runScrollUpdates() {
     scrollRaf = null;
@@ -99,8 +145,12 @@
         refTranslateStart = Math.round(translateStart);
         refVhAtFreeze = viewportHeight;
         refSection2TopZero = scrollY + top;
+        debugLog("POSITION", "section1Frozen=true refTranslateStart=" + refTranslateStart + " refVhAtFreeze=" + refVhAtFreeze + " refSection2TopZero=" + refSection2TopZero);
       }
-      if (top >= viewportHeight) section1Frozen = false;
+      if (top >= viewportHeight) {
+        if (section1Frozen) debugLog("POSITION", "section1Frozen=false (section2 back out of view)");
+        section1Frozen = false;
+      }
       section2OutOfView = top >= viewportHeight;
     }
 
@@ -140,6 +190,11 @@
       if (section2 && coupleProgress !== lastCoupleProgress) {
         lastCoupleProgress = coupleProgress;
         section2.style.setProperty("--couple-progress", coupleProgress);
+      }
+      var now = Date.now();
+      if (now - debugScrollLogTime >= DEBUG_SCROLL_THROTTLE_MS) {
+        debugScrollLogTime = now;
+        debugLog("SCROLL", "scrollY=" + scrollY + " vh=" + viewportHeight + " w=" + window.innerWidth + " isMobile=" + isMobile + " progress=" + progress.toFixed(3) + " frozen=1 coupleProgress=" + coupleProgress + " s2Top=" + (s2Top != null ? s2Top : "n/a") + " frozenTranslateY=" + Math.round(frozenTranslateY));
       }
       return;
     }
@@ -183,9 +238,18 @@
       lastCoupleProgress = coupleProgress;
       section2.style.setProperty("--couple-progress", coupleProgress);
     }
+    var now = Date.now();
+    if (now - debugScrollLogTime >= DEBUG_SCROLL_THROTTLE_MS) {
+      debugScrollLogTime = now;
+      debugLog("SCROLL", "scrollY=" + scrollY + " vh=" + viewportHeight + " w=" + window.innerWidth + " isMobile=" + isMobile + " progress=" + progress.toFixed(3) + " frozen=0 coupleProgress=" + coupleProgress + " s2Top=" + (s2Top != null ? s2Top : "n/a") + " translateY=" + Math.round(translateY) + " thresholdPx=" + Math.round(thresholdPx) + " heightVh=" + heightVh + " templeTy=" + templeTranslateY + " flowersTy=" + flowersTranslateY + " titleTy=" + titleTranslateY);
+    }
   }
 
   function scheduleScrollUpdate() {
+    if (!firstScrollLogged) {
+      firstScrollLogged = true;
+      debugLog("SCROLL", "first scroll event scrollY=" + (window.scrollY || window.pageYOffset));
+    }
     if (scrollScheduled) return;
     scrollScheduled = true;
     if (scrollRaf !== null) return;
@@ -194,21 +258,49 @@
 
   window.addEventListener("scroll", scheduleScrollUpdate, { passive: true });
   window.addEventListener("resize", function () {
+    debugLog("RESIZE", "innerWidth=" + window.innerWidth + " innerHeight=" + window.innerHeight + " scrollY=" + (window.scrollY || window.pageYOffset));
     scrollScheduled = false;
     runScrollUpdates();
   });
 
+  /* Touch logging for mobile scroll debugging */
+  var debugTouchLogTime = 0;
+  window.addEventListener("touchstart", function (e) {
+    var t = e.touches[0];
+    debugLog("TOUCH", "start clientX=" + (t ? t.clientX : "") + " clientY=" + (t ? t.clientY : "") + " scrollY=" + (window.scrollY || window.pageYOffset));
+  }, { passive: true });
+  window.addEventListener("touchmove", function (e) {
+    var now = Date.now();
+    if (now - debugTouchLogTime < 200) return;
+    debugTouchLogTime = now;
+    var t = e.touches[0];
+    debugLog("TOUCH", "move clientX=" + (t ? t.clientX : "") + " clientY=" + (t ? t.clientY : "") + " scrollY=" + (window.scrollY || window.pageYOffset));
+  }, { passive: true });
+  window.addEventListener("touchend", function (e) {
+    debugLog("TOUCH", "end scrollY=" + (window.scrollY || window.pageYOffset) + " changedTouches=" + (e.changedTouches ? e.changedTouches.length : 0));
+  }, { passive: true });
+
   setTimeout(function () {
+    debugLog("INIT", "setTimeout(80): runScrollUpdates + initial title/temple set");
     scrollScheduled = false;
     runScrollUpdates();
     if (titleLayer) titleLayer.style.setProperty("--title-top", titleTopStart + "%");
     templeWrap.style.setProperty("--temple-height", getTempleHeights().initial + "vh");
+    if (hero) {
+      var hr = hero.getBoundingClientRect();
+      debugLog("POSITION", "hero getBoundingClientRect top=" + hr.top + " left=" + hr.left + " height=" + hr.height + " width=" + hr.width);
+    }
+    if (section2) {
+      var s2r = section2.getBoundingClientRect();
+      debugLog("POSITION", "section2 getBoundingClientRect top=" + s2r.top + " left=" + s2r.left + " height=" + s2r.height + " width=" + s2r.width);
+    }
   }, 80);
 
   setTimeout(function () {
     if (hero) {
       hero.classList.add("hero--loaded");
       hero.classList.remove("hero--drop-in");
+      debugLog("ANIM", "hero--loaded set (drop-in complete)");
     }
   }, 80 + 2000);
 
@@ -242,5 +334,11 @@
     updateButton();
     /* Try autoplay on start; if allowed → button shows pause, else stays play; user can toggle anytime */
     audio.play().catch(function () {});
+  })();
+
+  /* Copy debug logs button */
+  (function () {
+    var btn = document.getElementById("debugLogsCopy");
+    if (btn) btn.addEventListener("click", debugCopy);
   })();
 })();

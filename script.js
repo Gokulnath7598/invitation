@@ -2,7 +2,7 @@
   "use strict";
 
   /* ---- Debug logger: app init → positioning/scroll (for mobile debugging) ---- */
-  var DEBUG_VERSION = "scroll-v14-2026-04-01-hero-released";
+  var DEBUG_VERSION = "scroll-v15-2026-04-01-mobile-stable-vh";
   var DEBUG_MAX_LINES = 1400;
   var DEBUG_SCROLL_THROTTLE_MS = 50;
   /** Set false to only log summary lines (no per-element RECT/XFORM rows) */
@@ -38,7 +38,11 @@
    * Throttled detailed layout log: scroll math + each hero layer + section2 (position/size + applied motion).
    */
   function debugLogScrollLayout(nowMs, kind, o) {
-    if (nowMs - debugScrollLogTime < DEBUG_SCROLL_THROTTLE_MS) return;
+    var logThrottleMs = DEBUG_SCROLL_THROTTLE_MS;
+    if (typeof window.innerWidth === "number" && window.innerWidth < 768) {
+      logThrottleMs = Math.max(logThrottleMs, 100);
+    }
+    if (nowMs - debugScrollLogTime < logThrottleMs) return;
     debugScrollLogTime = nowMs;
     var sum = kind
       + " sy=" + o.scrollY.toFixed(1)
@@ -213,6 +217,8 @@
       stableVh = Math.max(stableVh || viewportHeight, viewportHeight);
     }
     var layoutVh = isMobile ? stableVh : viewportHeight;
+    /* Section 2 visibility / couple range: on mobile use stable vh so URL-bar height changes do not jitter thresholds frame-to-frame */
+    var vhForS2 = isMobile ? layoutVh : viewportHeight;
 
     var thresholdPx = (scrollForFullVh / 100) * layoutVh;
     var translateStart = thresholdPx;
@@ -222,7 +228,7 @@
     var s2Rect = null;
     if (section2) {
       s2Rect = section2.getBoundingClientRect();
-      section2OutOfView = s2Rect.top >= viewportHeight;
+      section2OutOfView = s2Rect.top >= vhForS2;
     }
     var pathTaken = "anim";
 
@@ -245,20 +251,27 @@
       var rect = s2Rect != null ? s2Rect : section2.getBoundingClientRect();
       var top = rect.top;
       s2Top = Math.round(top);
-      var start = viewportHeight;
-      var end = viewportHeight * 0.15;
+      var start = vhForS2;
+      var end = vhForS2 * 0.15;
       coupleProgress = 1 - (top - end) / (start - end);
       coupleProgress = Math.max(0, Math.min(1, coupleProgress));
-      coupleProgress = Math.round(coupleProgress * 100) / 100;
+      if (isMobile) {
+        coupleProgress = Math.round(coupleProgress * 1000) / 1000;
+      } else {
+        coupleProgress = Math.round(coupleProgress * 100) / 100;
+      }
       if (top < -50) coupleProgress = 1;
       /* Rect often snaps to 0 when section 2 is just below the fold after unfreeze; keep last applied value */
-      if (lastCoupleProgress > 0 && coupleProgress === 0 && top >= viewportHeight) {
+      if (lastCoupleProgress > 0 && coupleProgress === 0 && top >= vhForS2) {
         coupleProgress = lastCoupleProgress;
       }
       if (isMobile) {
-        if (top < viewportHeight * 0.95) {
+        /* Hysteresis: avoid toggling class when top hovers near threshold during fast fling */
+        var s2Enter = vhForS2 * 0.95;
+        var s2Exit = vhForS2 * 0.97;
+        if (top < s2Enter) {
           document.body.classList.add("section-2-in-view");
-        } else {
+        } else if (top > s2Exit) {
           document.body.classList.remove("section-2-in-view");
         }
       } else {
@@ -267,11 +280,11 @@
       /* Freeze section 1 only when section 2 has started AND section 1 animation is nearly complete (>= 0.98 avoids float edge cases).
          This avoids a jump: we were freezing when s2Top < vh but translateY was still 0, so we applied 0 to
          all layers while the anim path had temple/flowers at non-zero offsets. */
-      if (top < viewportHeight && progress >= 0.98 && !section1Frozen) {
+      if (top < vhForS2 && progress >= 0.98 && !section1Frozen) {
         section1Frozen = true;
         /* Exact threshold (no Math.round): rounded refTS caused frozen vs ANIM translate mismatch near thrPx */
         refTranslateStart = translateStart;
-        refVhAtFreeze = viewportHeight;
+        refVhAtFreeze = isMobile ? layoutVh : viewportHeight;
         refSection2TopZero = Math.round(scrollY + top);
         refScrollYAtFreeze = scrollY;
         debugLog("FREEZE", "section1Frozen=true scrollY=" + scrollY + " refScrollYAtFreeze=" + refScrollYAtFreeze + " s2Top=" + s2Top + " refTranslateStart=" + refTranslateStart + " refVhAtFreeze=" + refVhAtFreeze + " refSection2TopZero=" + refSection2TopZero);
@@ -281,7 +294,7 @@
         }
       }
       /* Hysteresis: avoid unfreeze snap when section 2 barely clears the viewport */
-      if (top >= viewportHeight + 40) {
+      if (top >= vhForS2 + 40) {
         if (section1Frozen) debugLog("FREEZE", "section1Frozen=false (section2 back out of view, +40px) scrollY=" + scrollY + " s2Top=" + s2Top);
         section1Frozen = false;
         if (hero) hero.classList.remove("hero--released");

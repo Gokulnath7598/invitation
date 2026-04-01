@@ -114,17 +114,36 @@ body {
 
 .hero__logo {
   display: block;
-  width: min(90vw, 440px);
+  width: 100%;
+  max-width: min(90vw, 440px);
   height: auto;
-  max-height: min(30vh, 240px);
+  max-height: min(34vh, 260px);
   object-fit: contain;
+  object-position: center center;
   filter: drop-shadow(0 4px 20px rgba(0,0,0,0.5)) drop-shadow(0 2px 8px rgba(0,0,0,0.45));
+}
+
+/* Logo scales with viewport width; avoid tiny caps from vh-only max-height on phones */
+@media (max-width: 767px) {
+  .hero__title-layer {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  .hero__title {
+    max-width: 100%;
+  }
+  .hero__logo {
+    width: min(92vw, 420px);
+    max-width: 100%;
+    height: auto;
+    max-height: min(48vh, 320px);
+  }
 }
 
 @media (max-width: 480px) {
   .hero__logo {
-    width: min(92vw, 380px);
-    max-height: min(26vh, 200px);
+    width: min(94vw, 400px);
+    max-height: min(52vh, 300px);
   }
 }
 
@@ -394,6 +413,14 @@ body {
   .section-2 {
     margin-top: 0;
     background-size: 280px 280px;
+    /* Shorter than 180vh: less empty carpet below the invitation on phones */
+    min-height: min(125vh, 920px);
+  }
+}
+
+@media (max-width: 480px) {
+  .section-2 {
+    min-height: min(118vh, 820px);
   }
 }
 
@@ -431,6 +458,7 @@ body {
 @media (max-width: 767px) {
   .section-2__floor {
     top: 0;
+    padding: 1rem 1rem 1.25rem;
   }
 }
 
@@ -535,8 +563,8 @@ body {
 
 @media (max-width: 767px) {
   .section-2__card-corners {
-    top: 73vh;
-    padding: 6% 5%;
+    top: 70vh;
+    padding: 4% 4% 3%;
   }
   .section-2__card-corner {
     height: clamp(56px, 10vmin, 22vh);
@@ -548,8 +576,8 @@ body {
 
 @media (max-width: 480px) {
   .section-2__card-corners {
-    top: 71vh;
-    padding: 6% 5%;
+    top: 66vh;
+    padding: 3% 4% 2.5%;
   }
   .section-2__card-corner {
     height: clamp(48px, 9vmin, 18vh);
@@ -628,6 +656,21 @@ body {
 @media (min-width: 768px) {
   .section-2__invitation {
     margin-top: 11vh;
+  }
+}
+
+@media (max-width: 767px) {
+  .section-2__invitation {
+    margin-top: 2vh;
+    padding: clamp(0.5rem, 2vw, 1rem) 0 clamp(0.35rem, 1.5vw, 0.75rem);
+    width: calc(100% - 3rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .section-2__invitation {
+    margin-top: 1vh;
+    width: calc(100% - 2.5rem);
   }
 }
 

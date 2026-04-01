@@ -104,39 +104,28 @@ body {
 }
 
 .hero__title {
-  font-family: "Pacifico", cursive;
-  font-weight: 400;
-  font-size: clamp(2rem, 8vw, 4.5rem);
-  line-height: 1.35;
-  letter-spacing: 0.02em;
-  color: #ffffff;
-  text-shadow:
-    0 0 20px rgba(0,0,0,0.5),
-    0 2px 4px rgba(0,0,0,0.6),
-    0 4px 12px rgba(0,0,0,0.4),
-    0 1px 2px rgba(0,0,0,0.8);
+  margin: 0;
+  padding: 0;
+  line-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.hero__name {
+.hero__logo {
   display: block;
-  font-weight: 400;
-  margin-bottom: 0.06em;
+  width: min(90vw, 440px);
+  height: auto;
+  max-height: min(30vh, 240px);
+  object-fit: contain;
+  filter: drop-shadow(0 4px 20px rgba(0,0,0,0.5)) drop-shadow(0 2px 8px rgba(0,0,0,0.45));
 }
 
-.hero__name + .hero__weds {
-  margin-top: 0.12em;
-}
-
-.hero__weds {
-  display: block;
-  font-family: "Lato", sans-serif;
-  font-size: 0.42em;
-  letter-spacing: 0.25em;
-  font-weight: 600;
-  margin-top: 0;
-  margin-bottom: 0.06em;
-  color: #ffd54f;
-  text-shadow: 0 0 20px rgba(255,213,79,0.6), 0 0 40px rgba(255,213,79,0.35), 0 2px 4px rgba(0,0,0,0.3);
+@media (max-width: 480px) {
+  .hero__logo {
+    width: min(92vw, 380px);
+    max-height: min(26vh, 200px);
+  }
 }
 
 /* 3. Temple – anchored to viewport bottom so it always aligns with BG; height grows on scroll */
@@ -653,6 +642,48 @@ body {
   margin: 0 0 0.75rem;
 }
 
+.section-2__invitation-verse {
+  font-family: "Lato", sans-serif;
+  font-size: clamp(0.58rem, calc(1.65vw + 0.38rem), 0.82rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #f5f0e8;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
+  line-height: 1.45;
+  margin: 0 0 1.1rem;
+  max-width: 24em;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-2__invitation-verse p {
+  margin: 0 0 0.3em;
+}
+
+.section-2__invitation-verse p:last-child {
+  margin-bottom: 0;
+}
+
+.section-2__invitation-couple-names {
+  margin: 0 0 1rem;
+}
+
+.section-2__invitation-names--couple {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.section-2__invitation-weds-line {
+  font-family: "Lato", sans-serif;
+  font-size: clamp(0.52rem, calc(1.45vw + 0.32rem), 0.8rem);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: lowercase;
+  color: #ffd54f;
+  text-shadow: 0 0 12px rgba(255,213,79,0.45), 0 1px 3px rgba(0,0,0,0.4);
+  margin: 0.35rem 0;
+}
+
 .section-2__invitation-intro {
   font-family: "Lato", sans-serif;
   font-size: clamp(0.6rem, calc(1.8vw + 0.4rem), 0.85rem);
@@ -709,6 +740,18 @@ body {
   gap: 1.5rem;
   flex-wrap: wrap;
   margin: 0 0 1rem;
+}
+
+.section-2__invitation-details--stacked {
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section-2__invitation-details--stacked .section-2__invitation-event .section-2__invitation-date,
+.section-2__invitation-details--stacked .section-2__invitation-event .section-2__invitation-time {
+  display: block;
+  margin-top: 0.3rem;
 }
 
 .section-2__invitation-event {
@@ -830,9 +873,11 @@ body {
 /* Desktop: larger invitation text */
 @media (min-width: 1024px) {
   .section-2__invitation-head { font-size: 1.15rem; }
+  .section-2__invitation-verse { font-size: 0.95rem; }
   .section-2__invitation-intro { font-size: 1rem; }
   .section-2__invitation-names { font-size: 2.85rem; }
   .section-2__invitation-sub { font-size: 1.05rem; }
+  .section-2__invitation-weds-line { font-size: 0.85rem; }
   .section-2__invitation-label { font-size: 0.9rem; }
   .section-2__invitation-date,
   .section-2__invitation-time { font-size: 1.1rem; }
@@ -844,9 +889,11 @@ body {
 /* Mobile: increased size (still smaller than desktop) */
 @media (max-width: 480px) {
   .section-2__invitation-head { font-size: 0.75rem; }
+  .section-2__invitation-verse { font-size: 0.62rem; }
   .section-2__invitation-intro { font-size: 0.65rem; }
   .section-2__invitation-names { font-size: 1.45rem; }
   .section-2__invitation-sub { font-size: 0.7rem; }
+  .section-2__invitation-weds-line { font-size: 0.55rem; }
   .section-2__invitation-label { font-size: 0.6rem; }
   .section-2__invitation-date,
   .section-2__invitation-time { font-size: 0.75rem; }
@@ -857,9 +904,11 @@ body {
 
 @media (max-width: 767px) and (min-width: 481px) {
   .section-2__invitation-head { font-size: 0.9rem; }
+  .section-2__invitation-verse { font-size: 0.72rem; }
   .section-2__invitation-intro { font-size: 0.75rem; }
   .section-2__invitation-names { font-size: 1.9rem; }
   .section-2__invitation-sub { font-size: 0.85rem; }
+  .section-2__invitation-weds-line { font-size: 0.65rem; }
   .section-2__invitation-label { font-size: 0.7rem; }
   .section-2__invitation-date,
   .section-2__invitation-time { font-size: 0.9rem; }

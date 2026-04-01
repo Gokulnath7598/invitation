@@ -21,7 +21,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Hero: tall section; BG fixed until temple bottom reaches viewport bottom, then BG scrolls */
+/* Hero: tall section: BG fixed until temple bottom reaches viewport bottom, then BG scrolls */
 .hero {
   position: relative;
   z-index: 6;
@@ -395,11 +395,13 @@ body {
 .section-2 {
   position: relative;
   z-index: 5;
-  min-height: 180vh;
+  min-height: 188vh;
   margin: 0;
   margin-top: 0; /* hero height matches scroll range; no negative overlap */
-  padding: 0;
-  overflow: hidden;
+  padding: 0 0 clamp(3.25rem, 10vh, 6rem);
+  overflow-x: hidden;
+  /* Allow tall invitation to extend; clip only horizontally */
+  overflow-y: visible;
   background-image: url("assets/redCarpetTexture.jpg");
   background-repeat: repeat;
   background-position: 0 0;
@@ -413,14 +415,25 @@ body {
   .section-2 {
     margin-top: 0;
     background-size: 280px 280px;
-    /* Shorter than 180vh: less empty carpet below the invitation on phones */
-    min-height: min(125vh, 920px);
+    min-height: 162vh;
+    /* Large bottom padding = scroll room under venue, still red carpet (no grey body strip) */
+    padding-bottom: clamp(7.5rem, 34vh, 13rem);
+    transform: none;
   }
 }
 
 @media (max-width: 480px) {
   .section-2 {
-    min-height: min(118vh, 820px);
+    min-height: 158vh;
+    padding-bottom: clamp(8rem, 38vh, 14rem);
+  }
+}
+
+/* Short viewports (e.g. 300×577): enough scroll to clear fixed controls; carpet not body color */
+@media (max-width: 480px) and (max-height: 640px) {
+  .section-2 {
+    min-height: 168vh;
+    padding-bottom: clamp(7rem, 32vh, 11rem);
   }
 }
 
@@ -563,8 +576,8 @@ body {
 
 @media (max-width: 767px) {
   .section-2__card-corners {
-    top: 70vh;
-    padding: 4% 4% 3%;
+    top: 62vh;
+    padding: 2.25% 4% 12%;
   }
   .section-2__card-corner {
     height: clamp(56px, 10vmin, 22vh);
@@ -576,8 +589,8 @@ body {
 
 @media (max-width: 480px) {
   .section-2__card-corners {
-    top: 66vh;
-    padding: 3% 4% 2.5%;
+    top: 59vh; /* couple box ends ~56vh; small gap before card band */
+    padding: 2% 3% 14%;
   }
   .section-2__card-corner {
     height: clamp(48px, 9vmin, 18vh);
@@ -632,7 +645,7 @@ body {
   z-index: 11;
   pointer-events: none;
   overflow: visible;
-  padding: 6% 5%;
+  padding: 3.5% 5% 11%;
   box-sizing: border-box;
 }
 
@@ -641,36 +654,86 @@ body {
   position: absolute;
   inset: 0;
   margin: auto;
-  margin-top: 5vh;
+  margin-top: 1.5vh;
   width: calc(100% - 8rem);
   max-width: 28rem;
   height: fit-content;
   max-height: none;
   pointer-events: auto;
   text-align: center;
-  padding: clamp(1rem, 3vw, 1.5rem) 0;
+  padding: clamp(0.85rem, 2.8vw, 1.35rem) 0 clamp(3.5rem, 8vh, 5.5rem);
   overflow: visible;
 }
 
-/* Desktop/tablet: push invitation text lower for better vertical centering in card */
+/* Desktop/tablet: sit higher in card; clear top corners; room below venue */
 @media (min-width: 768px) {
   .section-2__invitation {
-    margin-top: 11vh;
+    margin-top: 2vh;
+    padding-top: clamp(0.9rem, 2.5vw, 1.5rem);
+    padding-bottom: clamp(5rem, 11vh, 7rem);
   }
 }
 
 @media (max-width: 767px) {
   .section-2__invitation {
-    margin-top: 2vh;
-    padding: clamp(0.5rem, 2vw, 1rem) 0 clamp(0.35rem, 1.5vw, 0.75rem);
-    width: calc(100% - 3rem);
+    inset: auto;
+    left: 50%;
+    right: auto;
+    top: 0;
+    bottom: auto;
+    width: calc(100% - 2.5rem);
+    max-width: 28rem;
+    height: fit-content;
+    max-height: none;
+    margin: 0;
+    transform: translateX(-50%);
+    padding: clamp(0.5rem, 2vw, 0.85rem) 0.35rem clamp(5rem, 18vw, 7.5rem);
+    z-index: 2;
+    overflow: visible;
   }
 }
 
 @media (max-width: 480px) {
   .section-2__invitation {
-    margin-top: 1vh;
-    width: calc(100% - 2.5rem);
+    width: calc(100% - 2rem);
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    padding-top: clamp(0.5rem, 2.2vw, 0.85rem);
+    /* Section padding-bottom carries most scroll past venue */
+    padding-bottom: clamp(3.5rem, 12vw, 5.5rem);
+  }
+}
+
+@media (max-width: 380px) {
+  .section-2__invitation {
+    padding-bottom: clamp(3.25rem, 11vw, 5rem);
+  }
+}
+
+/* Short + narrow: tighter vertical rhythm so verse fits in less scroll */
+@media (max-width: 480px) and (max-height: 640px) {
+  .section-2__invitation-verse {
+    margin-bottom: 0.7rem;
+    line-height: 1.35;
+  }
+  .section-2__invitation-verse p {
+    margin: 0 0 0.2em;
+  }
+  .section-2__invitation-couple-names {
+    margin-bottom: 0.65rem;
+  }
+  .section-2__invitation-intro {
+    margin-bottom: 0.85rem;
+  }
+  .section-2__invitation-details--stacked {
+    gap: 0.65rem;
+    margin-bottom: 0.65rem;
+  }
+  .section-2__invitation-venue {
+    margin-bottom: 0.5rem;
+  }
+  .section-2__invitation-maps-wrap {
+    margin-bottom: 0.85rem;
   }
 }
 
@@ -877,7 +940,72 @@ body {
   letter-spacing: 0.06em;
   color: #f5f0e8;
   text-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
-  margin: 0 0 1rem;
+  margin: 0 0 0.65rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.section-2__invitation-maps-wrap {
+  margin: 0 0 clamp(1.25rem, 4vh, 2.25rem);
+  text-align: center;
+}
+
+/* Matches invitation labels: gold type, filigree feel — not a generic app chip */
+.section-2__maps-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  box-sizing: border-box;
+  max-width: 100%;
+  margin-top: 0.15rem;
+  padding: 0.4rem 0.85rem 0.45rem;
+  font-family: "Lato", sans-serif;
+  font-size: clamp(0.52rem, calc(1.45vw + 0.32rem), 0.78rem);
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-align: center;
+  line-height: 1.3;
+  color: #ffd54f;
+  text-shadow: 0 0 12px rgba(255, 213, 79, 0.4), 0 1px 3px rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 213, 79, 0.42);
+  border-radius: 2px;
+  box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.06), 0 1px 8px rgba(0, 0, 0, 0.2);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.section-2__maps-btn__icon {
+  flex-shrink: 0;
+  display: block;
+  opacity: 0.95;
+  filter: drop-shadow(0 0 6px rgba(255, 213, 79, 0.35));
+}
+
+.section-2__maps-btn__label {
+  white-space: nowrap;
+  padding-top: 0.05em; /* optical align with caps + icon */
+}
+
+.section-2__maps-btn:hover {
+  color: #ffe082;
+  text-shadow: 0 0 18px rgba(255, 213, 79, 0.55), 0 1px 3px rgba(0, 0, 0, 0.45);
+  background: rgba(255, 213, 79, 0.08);
+  border-color: rgba(255, 224, 130, 0.65);
+  box-shadow: inset 0 1px 0 rgba(255, 240, 220, 0.1), 0 0 14px rgba(255, 213, 79, 0.12);
+}
+
+.section-2__maps-btn:focus-visible {
+  outline: 2px solid rgba(255, 213, 79, 0.75);
+  outline-offset: 3px;
+}
+
+.section-2__maps-btn:active {
+  background: rgba(255, 213, 79, 0.05);
 }
 
 .section-2__invitation-address {
@@ -886,12 +1014,16 @@ body {
   font-weight: 500;
   margin-top: 0.35em;
   letter-spacing: 0.03em;
-  line-height: 1.4;
+  line-height: 1.45;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .section-2__invitation-link {
   color: #ffd54f;
   text-decoration: underline;
+  text-decoration-thickness: 1px;
   text-underline-offset: 3px;
   font-weight: 700;
   text-shadow: 0 0 12px rgba(255,213,79,0.5), 0 1px 3px rgba(0,0,0,0.4);
@@ -927,6 +1059,7 @@ body {
   .section-2__invitation-value { font-size: 1.15rem; }
   .section-2__invitation-venue { font-size: 1.1rem; }
   .section-2__invitation-wishes { font-size: 0.9rem; }
+  .section-2__maps-btn { font-size: 0.9rem; padding: 0.45rem 1rem 0.5rem; }
 }
 
 /* Mobile: increased size (still smaller than desktop) */
@@ -943,6 +1076,7 @@ body {
   .section-2__invitation-value { font-size: 0.8rem; }
   .section-2__invitation-venue { font-size: 0.75rem; }
   .section-2__invitation-wishes { font-size: 0.6rem; }
+  .section-2__maps-btn { font-size: 0.6rem; letter-spacing: 0.16em; padding: 0.35rem 0.65rem 0.4rem; }
 }
 
 @media (max-width: 767px) and (min-width: 481px) {
@@ -958,6 +1092,7 @@ body {
   .section-2__invitation-value { font-size: 0.95rem; }
   .section-2__invitation-venue { font-size: 0.9rem; }
   .section-2__invitation-wishes { font-size: 0.7rem; }
+  .section-2__maps-btn { font-size: 0.7rem; letter-spacing: 0.18em; }
 }
 
 .section-2__card-corner {
@@ -1066,103 +1201,3 @@ body {
   }
 }
 
-/* Floating venue (map) button – bottom right */
-.venue-float {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.25rem;
-  z-index: 100;
-  width: 3rem;
-  height: 3rem;
-  border: none;
-  border-radius: 50%;
-  background: rgba(201, 184, 150, 0.9);
-  color: #2d2d2d;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-  transition: background 0.2s ease, transform 0.2s ease;
-  text-decoration: none;
-}
-
-.venue-float:hover {
-  background: rgba(221, 204, 170, 1);
-  transform: scale(1.05);
-}
-
-.venue-float:focus {
-  outline: 2px solid rgba(201, 184, 150, 0.8);
-  outline-offset: 2px;
-}
-
-.venue-float__icon {
-  font-size: 1.25rem;
-  line-height: 1;
-  pointer-events: none;
-}
-
-@media (max-width: 480px) {
-  .venue-float {
-    bottom: 1rem;
-    right: 1rem;
-    width: 2.75rem;
-    height: 2.75rem;
-  }
-  .venue-float__icon {
-    font-size: 1.1rem;
-  }
-}
-
-/* Debug logs copy button – top right */
-.debug-logs-copy {
-  position: fixed;
-  top: 0.75rem;
-  right: 0.75rem;
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem 0.6rem;
-  font-size: 0.75rem;
-  font-family: inherit;
-  color: #2d2d2d;
-  background: rgba(201, 184, 150, 0.92);
-  border: none;
-  border-radius: 0.35rem;
-  cursor: pointer;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.debug-logs-copy:hover {
-  background: rgba(221, 204, 170, 1);
-  transform: scale(1.03);
-}
-
-.debug-logs-copy:focus {
-  outline: 2px solid rgba(201, 184, 150, 0.8);
-  outline-offset: 2px;
-}
-
-.debug-logs-copy__icon {
-  font-size: 0.9rem;
-  line-height: 1;
-}
-
-.debug-logs-copy__label {
-  white-space: nowrap;
-}
-
-@media (max-width: 480px) {
-  .debug-logs-copy {
-    top: 0.5rem;
-    right: 0.5rem;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.7rem;
-  }
-  .debug-logs-copy__label {
-    display: none;
-  }
-}

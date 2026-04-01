@@ -1,123 +1,6 @@
 (function () {
   "use strict";
 
-  /* ---- Debug logger: app init → positioning/scroll (for mobile debugging) ---- */
-  var DEBUG_VERSION = "scroll-v15-2026-04-01-mobile-stable-vh";
-  var DEBUG_MAX_LINES = 1400;
-  var DEBUG_SCROLL_THROTTLE_MS = 50;
-  /** Set false to only log summary lines (no per-element RECT/XFORM rows) */
-  var DEBUG_LOG_EACH_ELEMENT = true;
-  var debugLines = [];
-  var debugScrollLogTime = 0;
-
-  function debugLog(cat, msg) {
-    var ts = new Date().toISOString();
-    var line = ts + " [" + cat + "] " + msg;
-    debugLines.push(line);
-    if (debugLines.length > DEBUG_MAX_LINES) debugLines.shift();
-  }
-
-  function debugGetText() {
-    return debugLines.join("\n") || "[No logs yet]";
-  }
-
-  function shortRect(el) {
-    if (!el) return "n/a";
-    var b = el.getBoundingClientRect();
-    return "t=" + b.top.toFixed(1) + " b=" + b.bottom.toFixed(1) + " l=" + b.left.toFixed(1) + " r=" + b.right.toFixed(1) + " w=" + b.width.toFixed(0) + " h=" + b.height.toFixed(0);
-  }
-
-  function readCssVarPx(el, name) {
-    if (!el) return "";
-    var cs = window.getComputedStyle(el);
-    var v = cs.getPropertyValue(name).trim();
-    return v || "(unset)";
-  }
-
-  /**
-   * Throttled detailed layout log: scroll math + each hero layer + section2 (position/size + applied motion).
-   */
-  function debugLogScrollLayout(nowMs, kind, o) {
-    var logThrottleMs = DEBUG_SCROLL_THROTTLE_MS;
-    if (typeof window.innerWidth === "number" && window.innerWidth < 768) {
-      logThrottleMs = Math.max(logThrottleMs, 100);
-    }
-    if (nowMs - debugScrollLogTime < logThrottleMs) return;
-    debugScrollLogTime = nowMs;
-    var sum = kind
-      + " sy=" + o.scrollY.toFixed(1)
-      + " dSy=" + o.scrollDelta.toFixed(2)
-      + " rawY=" + o.rawScrollY.toFixed(1)
-      + " vh=" + o.viewportH
-      + " layoutVh=" + o.layoutVh.toFixed(0)
-      + " stableVh=" + (o.stableVh != null ? o.stableVh.toFixed(0) : "n/a")
-      + " mobile=" + o.isMobile
-      + " touch=" + o.touch
-      + " frozen=" + (o.frozen ? 1 : 0)
-      + " path=" + o.path
-      + " prog=" + o.progress.toFixed(4)
-      + " thrPx=" + o.thresholdPx.toFixed(1)
-      + " tStart=" + o.translateStart.toFixed(1)
-      + " transY=" + o.translateY.toFixed(2)
-      + " pull=" + o.pull.toFixed(2);
-    if (o.animProgress != null) sum += " animP=" + o.animProgress.toFixed(4);
-    if (o.refTS != null) sum += " refTS=" + o.refTS + " refVhF=" + o.refVhF + " refS2Z=" + o.refS2Z;
-    if (o.s2Top != null) sum += " s2Top=" + o.s2Top + " s2Out=" + (o.s2Out ? 1 : 0);
-    if (o.couple != null) sum += " couple=" + o.couple.toFixed(4);
-    debugLog("SUMMARY", sum);
-
-    if (!DEBUG_LOG_EACH_ELEMENT) return;
-
-    var m = o.mountains;
-    var tl = o.titleLayer;
-    var tw = o.templeWrap;
-    var fl = o.flowersLayer;
-    var s2 = o.section2;
-    var hr = o.hero;
-    var sc = o.scrollArea;
-
-    debugLog("RECT", "hero " + shortRect(hr) + " | scrollArea " + shortRect(sc));
-    debugLog("RECT", "mountains " + shortRect(m) + " | titleLayer " + shortRect(tl) + " | templeWrap " + shortRect(tw));
-    debugLog("RECT", "flowersLayer " + shortRect(fl) + " | section2 " + shortRect(s2));
-
-    var titleTopVar = readCssVarPx(tl, "--title-top");
-    var templeHVar = readCssVarPx(tw, "--temple-height");
-    var coupleVar = s2 ? readCssVarPx(s2, "--couple-progress") : "";
-
-    var coupleDisp = o.couple != null ? o.couple.toFixed(4) : (coupleVar || "n/a");
-    debugLog(
-      "XFORM",
-      "mtnTy=" + o.mtnTy.toFixed(2)
-        + " titleTop%=" + (o.titleTopPct != null ? o.titleTopPct.toFixed(2) : titleTopVar)
-        + " titleTy=" + o.titleTy.toFixed(2)
-        + " templeH=" + templeHVar
-        + " templeTy=" + o.templeTy.toFixed(2)
-        + " flwTy=" + o.flwTy.toFixed(2)
-        + " s2--couple=" + coupleDisp
-    );
-  }
-
-  function debugCopy() {
-    var btn = document.getElementById("debugLogsCopy");
-    var text = debugGetText();
-    var label = btn && btn.querySelector(".debug-logs-copy__label");
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () {
-        if (label) label.textContent = "Copied!";
-        setTimeout(function () { if (label) label.textContent = "Copy logs"; }, 2000);
-      }).catch(function () {
-        if (label) label.textContent = "Copy failed";
-        setTimeout(function () { if (label) label.textContent = "Copy logs"; }, 2000);
-      });
-    } else {
-      if (label) label.textContent = "Copy failed";
-      setTimeout(function () { if (label) label.textContent = "Copy logs"; }, 2000);
-    }
-  }
-
-  debugLog("INIT", "version=" + DEBUG_VERSION + " | UA=" + (navigator.userAgent || "").substring(0, 60));
-  debugLog("INIT", "viewport meta: " + (document.querySelector('meta[name="viewport"]') ? document.querySelector('meta[name="viewport"]').getAttribute("content") : "none"));
-
   /* On load/refresh: scroll to top and restart the page (fall animation from the beginning) */
   if (typeof history !== "undefined" && "scrollRestoration" in history) {
     history.scrollRestoration = "manual";
@@ -125,7 +8,6 @@
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
-  debugLog("INIT", "scrollTo(0,0) done | scrollY=" + (window.scrollY || window.pageYOffset) + " docEl.scrollTop=" + document.documentElement.scrollTop + " body.scrollTop=" + document.body.scrollTop);
 
   var hero = document.getElementById("hero");
   var templeWrap = document.getElementById("templeWrap");
@@ -138,14 +20,12 @@
   var mountainsEl = document.querySelector(".hero__mountains");
 
   if (!hero || !templeWrap) {
-    debugLog("INIT", "ABORT: missing hero or templeWrap");
     return;
   }
 
   /* Ensure hero starts in drop-in state so the fall animation runs again */
   hero.classList.remove("hero--loaded");
   hero.classList.add("hero--drop-in");
-  debugLog("INIT", "hero state: hero--drop-in set");
 
   var mobileBreakpoint = 768;
   var scrollForFullVh = 55;  /* scroll over this many vh to complete section 1 */
@@ -169,7 +49,6 @@
   var initialRisePx = 0.15 * vh0;
   templeWrap.style.transform = "translateY(" + initialRisePx + "px)";
   templeWrap.style.transition = "none";
-  debugLog("INIT", "innerWidth=" + window.innerWidth + " innerHeight=" + vh0 + " isMobile=" + (window.innerWidth < mobileBreakpoint) + " templeHeights=" + h0.initial + "vh/" + h0.max + "vh initialRisePx=" + initialRisePx);
 
   var scrollRaf = null;
   var scrollScheduled = false;
@@ -181,18 +60,12 @@
   var refVhAtFreeze = 0;
   /** When frozen: section 2 top in viewport = refSection2TopZero - scrollY. Used so coupleProgress is derived from scrollY (same as section 1). */
   var refSection2TopZero = 0;
-  var firstScrollLogged = false;
   /** Smoothed translateY to avoid jump when scrollY leaps at unfreeze (e.g. vh change). */
   var lastAppliedTranslateY = 0;
   /** For time-based lerp: initialized to now so first dt is reasonable */
   var lastScrollUpdateTime = Date.now();
   /** On mobile: max vh seen, so section 1 doesn't resize when address bar shows/hides. */
   var stableVh = window.innerHeight || 600;
-  /** Track last scrollY to detect direction and sudden jumps */
-  var lastScrollY = 0;
-  /** Is touch currently active */
-  var isTouchActive = false;
-
   function runScrollUpdates() {
     scrollRaf = null;
     scrollScheduled = false;
@@ -202,10 +75,6 @@
     var scrollY = rawScrollY;
     /* iOS overscroll (pull-to-refresh) can report negative scrollY; clamp only for our layout */
     if (scrollY < 0) scrollY = 0;
-    /* Track scroll delta for debugging */
-    var scrollDelta = scrollY - lastScrollY;
-    lastScrollY = scrollY;
-    /* On mobile with touch active, ignore small negative values that cause jitter */
     var pullOffsetPx = 0;
     if (rawScrollY < 0 && rawScrollY > -100) {
       pullOffsetPx = rawScrollY * 0.5; /* Dampen the pull effect */
@@ -223,21 +92,14 @@
     var thresholdPx = (scrollForFullVh / 100) * layoutVh;
     var translateStart = thresholdPx;
     var translateY = scrollY > translateStart ? -(scrollY - translateStart) : 0;
-    /* Check if section 2 is out of view for freeze/unfreeze logic */
-    var section2OutOfView = false;
     var s2Rect = null;
     if (section2) {
       s2Rect = section2.getBoundingClientRect();
-      section2OutOfView = s2Rect.top >= vhForS2;
     }
-    var pathTaken = "anim";
-
     /* Simple translateY calculation - direct mapping to scroll position, no smoothing */
     if (scrollY > translateStart) {
-      pathTaken = "trans";
       translateY = -(scrollY - translateStart);
     } else {
-      pathTaken = "zero";
       translateY = 0;
     }
     lastAppliedTranslateY = translateY;
@@ -287,19 +149,15 @@
         refVhAtFreeze = isMobile ? layoutVh : viewportHeight;
         refSection2TopZero = Math.round(scrollY + top);
         refScrollYAtFreeze = scrollY;
-        debugLog("FREEZE", "section1Frozen=true scrollY=" + scrollY + " refScrollYAtFreeze=" + refScrollYAtFreeze + " s2Top=" + s2Top + " refTranslateStart=" + refTranslateStart + " refVhAtFreeze=" + refVhAtFreeze + " refSection2TopZero=" + refSection2TopZero);
         if (hero && !hero.classList.contains("hero--released")) {
           hero.classList.add("hero--released");
-          debugLog("STATE", "hero--released: layers leave fixed → scroll with hero (no overlap with section 2)");
         }
       }
       /* Hysteresis: avoid unfreeze snap when section 2 barely clears the viewport */
       if (top >= vhForS2 + 40) {
-        if (section1Frozen) debugLog("FREEZE", "section1Frozen=false (section2 back out of view, +40px) scrollY=" + scrollY + " s2Top=" + s2Top);
         section1Frozen = false;
         if (hero) hero.classList.remove("hero--released");
       }
-      /* section2OutOfView already set above */
     }
 
     /* Use frozen formula only when section 1 is actually frozen (section 2 in view and anim complete).
@@ -308,7 +166,6 @@
     if (section1Frozen && refScrollYAtFreeze > 0 && scrollY < refScrollYAtFreeze - 10) {
       section1Frozen = false;
       if (hero) hero.classList.remove("hero--released");
-      debugLog("FREEZE", "section1Frozen=false (scrolled back above threshold) scrollY=" + scrollY + " refScrollYAtFreeze=" + refScrollYAtFreeze);
     }
     if (section1Frozen) {
       /* Anchor to scroll at freeze so fixed layers move in lockstep with section 2 (not translateStart, which can differ by a few px) */
@@ -363,46 +220,8 @@
         lastCoupleProgress = coupleProgress;
         section2.style.setProperty("--couple-progress", coupleProgress);
       }
-      var logTy = heroReleased ? 0 : frozenTranslateY;
-      var logPull = heroReleased ? 0 : pullOffsetPx;
-      lastAppliedTranslateY = logTy;
+      lastAppliedTranslateY = heroReleased ? 0 : frozenTranslateY;
       lastScrollUpdateTime = nowMs;
-      debugLogScrollLayout(nowMs, heroReleased ? "FROZEN_REL" : "FROZEN", {
-        scrollY: scrollY,
-        scrollDelta: scrollDelta,
-        rawScrollY: rawScrollY,
-        viewportH: viewportHeight,
-        layoutVh: layoutVh,
-        stableVh: isMobile ? stableVh : null,
-        isMobile: isMobile,
-        touch: isTouchActive,
-        frozen: true,
-        path: pathTaken,
-        progress: progress,
-        thresholdPx: thresholdPx,
-        translateStart: translateStart,
-        translateY: logTy,
-        pull: logPull,
-        animProgress: null,
-        refTS: refTranslateStart,
-        refVhF: refVhAtFreeze,
-        refS2Z: refSection2TopZero,
-        s2Top: s2Top,
-        s2Out: section2OutOfView,
-        couple: coupleProgress,
-        mtnTy: logTy + logPull,
-        titleTopPct: titleTopEnd,
-        titleTy: logTy + logPull,
-        templeTy: logTy + logPull,
-        flwTy: logTy + (heroReleased ? 0 : flowersOffsetPx) + logPull,
-        mountains: mountains,
-        titleLayer: titleLayer,
-        templeWrap: templeWrap,
-        flowersLayer: flowersLayer,
-        section2: section2,
-        hero: hero,
-        scrollArea: heroScrollArea
-      });
       return;
     }
 
@@ -455,50 +274,9 @@
     }
     lastAppliedTranslateY = translateY;
     lastScrollUpdateTime = nowMs;
-    debugLogScrollLayout(nowMs, "ANIM", {
-      scrollY: scrollY,
-      scrollDelta: scrollDelta,
-      rawScrollY: rawScrollY,
-      viewportH: viewportHeight,
-      layoutVh: layoutVh,
-      stableVh: isMobile ? stableVh : null,
-      isMobile: isMobile,
-      touch: isTouchActive,
-      frozen: false,
-      path: pathTaken,
-      progress: progress,
-      thresholdPx: thresholdPx,
-      translateStart: translateStart,
-      translateY: translateY,
-      pull: pullOffsetPx,
-      animProgress: animProgress,
-      refTS: refTranslateStart,
-      refVhF: refVhAtFreeze,
-      refS2Z: refSection2TopZero,
-      s2Top: s2Top,
-      s2Out: section2OutOfView,
-      couple: coupleProgress,
-      mtnTy: mountainsTranslateY,
-      titleTopPct: titleTopPctAnim,
-      titleTy: titleTranslateY,
-      templeTy: templeTranslateY,
-      flwTy: flowersTranslateY,
-      mountains: mountains,
-      titleLayer: titleLayer,
-      templeWrap: templeWrap,
-      flowersLayer: flowersLayer,
-      section2: section2,
-      hero: hero,
-      scrollArea: heroScrollArea
-    });
   }
 
   function scheduleScrollUpdate() {
-    if (!firstScrollLogged) {
-      firstScrollLogged = true;
-      var raw = window.scrollY || window.pageYOffset;
-      debugLog("SCROLL", "first scroll event scrollY=" + raw + (raw < 0 ? " (will clamp to 0)" : ""));
-    }
     if (scrollScheduled) return;
     scrollScheduled = true;
     if (scrollRaf !== null) return;
@@ -507,59 +285,21 @@
 
   window.addEventListener("scroll", scheduleScrollUpdate, { passive: true });
   window.addEventListener("resize", function () {
-    var sy = window.scrollY || window.pageYOffset;
-    debugLog("RESIZE", "w=" + window.innerWidth + " h=" + window.innerHeight + " scrollY=" + sy + " frozen=" + section1Frozen + " refVh=" + refVhAtFreeze + " refTxStart=" + refTranslateStart);
     scrollScheduled = false;
     runScrollUpdates();
-    var m = mountainsEl || document.querySelector(".hero__mountains");
-    debugLog("RESIZE_LAYERS", "hero " + shortRect(hero) + " | scrollArea " + shortRect(heroScrollArea));
-    debugLog("RESIZE_LAYERS", "mountains " + shortRect(m) + " | title " + shortRect(titleLayer) + " | temple " + shortRect(templeWrap));
-    debugLog("RESIZE_LAYERS", "flowers " + shortRect(flowersLayer) + " | section2 " + shortRect(section2));
   });
 
-  /* Touch tracking for mobile scroll stability */
-  var debugTouchLogTime = 0;
-  window.addEventListener("touchstart", function (e) {
-    isTouchActive = true;
-    var t = e.touches[0];
-    debugLog("TOUCH", "start clientX=" + (t ? t.clientX : "") + " clientY=" + (t ? t.clientY : "") + " scrollY=" + (window.scrollY || window.pageYOffset));
-  }, { passive: true });
-  window.addEventListener("touchmove", function (e) {
-    var now = Date.now();
-    if (now - debugTouchLogTime < 200) return;
-    debugTouchLogTime = now;
-    var t = e.touches[0];
-    debugLog("TOUCH", "move clientX=" + (t ? t.clientX : "") + " clientY=" + (t ? t.clientY : "") + " scrollY=" + (window.scrollY || window.pageYOffset));
-  }, { passive: true });
-  window.addEventListener("touchend", function (e) {
-    isTouchActive = false;
-    debugLog("TOUCH", "end scrollY=" + (window.scrollY || window.pageYOffset) + " changedTouches=" + (e.changedTouches ? e.changedTouches.length : 0));
-  }, { passive: true });
-  window.addEventListener("touchcancel", function () {
-    isTouchActive = false;
-  }, { passive: true });
-
   setTimeout(function () {
-    debugLog("INIT", "setTimeout(80): runScrollUpdates + initial title/temple set");
     scrollScheduled = false;
     runScrollUpdates();
     if (titleLayer) titleLayer.style.setProperty("--title-top", titleTopStart + "%");
     templeWrap.style.setProperty("--temple-height", getTempleHeights().initial + "vh");
-    if (hero) {
-      var hr = hero.getBoundingClientRect();
-      debugLog("POSITION", "hero getBoundingClientRect top=" + hr.top + " left=" + hr.left + " height=" + hr.height + " width=" + hr.width);
-    }
-    if (section2) {
-      var s2r = section2.getBoundingClientRect();
-      debugLog("POSITION", "section2 getBoundingClientRect top=" + s2r.top + " left=" + s2r.left + " height=" + s2r.height + " width=" + s2r.width);
-    }
   }, 80);
 
   setTimeout(function () {
     if (hero) {
       hero.classList.add("hero--loaded");
       hero.classList.remove("hero--drop-in");
-      debugLog("ANIM", "hero--loaded set (drop-in complete)");
     }
   }, 80 + 2000);
 
@@ -593,11 +333,5 @@
     updateButton();
     /* Try autoplay on start; if allowed → button shows pause, else stays play; user can toggle anytime */
     audio.play().catch(function () {});
-  })();
-
-  /* Copy debug logs button */
-  (function () {
-    var btn = document.getElementById("debugLogsCopy");
-    if (btn) btn.addEventListener("click", debugCopy);
   })();
 })();

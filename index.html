@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Gokul & Ramya – Wedding Invitation</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preload" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,600;0,700;1,400&family=Pacifico&family=Playfair+Display:ital,wght@0,500;0,600;0,700&display=swap" as="style" />
@@ -121,6 +124,14 @@
           </div>
         </div>
         <p class="section-2__invitation-venue">Venue: <a class="section-2__invitation-link" href="https://maps.app.goo.gl/Ab2fkBW8jvnn1qGw9" target="_blank" rel="noopener noreferrer">Leaf Palace</a>,<br /><span class="section-2__invitation-address">No. 63, 3A, Bypass X Road, Vengikkal, Tiruvannamalai.</span></p>
+        <p class="section-2__invitation-maps-wrap">
+          <a class="section-2__maps-btn" href="https://www.google.com/maps/dir/?api=1&amp;destination=Leaf%20Palace%2C%20No.%2063%2C%203A%2C%20Bypass%20X%20Road%2C%20Vengikkal%2C%20Tiruvannamalai%2C%20Tamil%20Nadu%2C%20India&amp;travelmode=driving" target="_blank" rel="noopener noreferrer" aria-label="Navigate to Leaf Palace in Google Maps" title="Opens Google Maps with directions from your location">
+            <svg class="section-2__maps-btn__icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+              <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+            </svg>
+            <span class="section-2__maps-btn__label">Navigate</span>
+          </a>
+        </p>
       </div>
     </div>
   </section>
@@ -132,14 +143,6 @@
   <button type="button" class="music-toggle is-paused" id="musicToggle" aria-label="Play background music" title="Play music">
     <span class="music-toggle__icon" aria-hidden="true">▶</span>
   </button>
-  <a href="https://maps.app.goo.gl/Ab2fkBW8jvnn1qGw9" target="_blank" rel="noopener noreferrer" class="venue-float" aria-label="Open venue location" title="View venue on map">
-    <span class="venue-float__icon" aria-hidden="true">📍</span>
-  </a>
-  <button type="button" class="debug-logs-copy" id="debugLogsCopy" aria-label="Copy debug logs" title="Copy scroll/position logs">
-    <span class="debug-logs-copy__icon">📋</span>
-    <span class="debug-logs-copy__label">Copy logs</span>
-  </button>
-
   <script src="script.js"></script>
 </body>
 </html>

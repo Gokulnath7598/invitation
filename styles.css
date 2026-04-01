@@ -25,14 +25,25 @@ body {
 .hero {
   position: relative;
   z-index: 6;
-  min-height: 180vh;
+  min-height: 155vh; /* scrollForFullVh (55vh) + 100vh viewport — section 2 meets hero end */
   margin: 0;
   padding: 0;
+  /* Prevent paint flashes during scroll */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* After freeze: layers leave the viewport (fixed) and paint inside the scrolling hero so section 2 is not trapped underneath */
+.hero.hero--released .hero__mountains,
+.hero.hero--released .hero__title-layer,
+.hero.hero--released .hero__temple-wrap,
+.hero.hero--released .hero__flowers-layer {
+  position: absolute !important;
 }
 
 .hero__scroll-area {
   position: relative;
-  min-height: 180vh;
+  min-height: 155vh;
   margin: 0;
   pointer-events: none;
 }
@@ -44,6 +55,9 @@ body {
   z-index: 0;
   background: #1a2332;
   will-change: transform;
+  /* Hardware acceleration for smoother mobile scrolling */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .hero__mountain-img {
@@ -76,6 +90,8 @@ body {
   padding: 0 1rem;
   transition: top 0.08s ease-out, transform 2s cubic-bezier(0.22, 0.61, 0.36, 1);
   will-change: transform;
+  /* Hardware acceleration for smoother mobile scrolling */
+  backface-visibility: hidden;
 }
 
 /* Initial load: start higher so drop-in animation has a clear "from" state */
@@ -139,6 +155,9 @@ body {
   overflow: hidden;
   z-index: 2;
   will-change: transform;
+  /* Hardware acceleration for smoother mobile scrolling */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @media (max-width: 767px) {
@@ -166,6 +185,9 @@ body {
   overflow: hidden;
   transition: transform 2s cubic-bezier(0.22, 0.61, 0.36, 1);
   will-change: transform;
+  /* Hardware acceleration for smoother mobile scrolling */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Initial load: start higher so drop-in animation has a clear "from" state */
@@ -367,18 +389,21 @@ body {
   z-index: 5;
   min-height: 180vh;
   margin: 0;
-  margin-top: -32vh;
+  margin-top: 0; /* hero height matches scroll range; no negative overlap */
   padding: 0;
   overflow: hidden;
   background-image: url("assets/redCarpetTexture.jpg");
   background-repeat: repeat;
   background-position: 0 0;
   background-size: 280px 280px;
+  /* Hardware acceleration for smoother mobile scrolling */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @media (max-width: 767px) {
   .section-2 {
-    margin-top: -30vh; /* pull up so carpet stays behind section 1 and doesn’t sit too far below */
+    margin-top: 0;
     background-size: 280px 280px;
   }
 }
@@ -493,6 +518,9 @@ body {
   pointer-events: none;
   --groom-half-w: 4vw;
   --bride-half-w: 3.8vw; /* ensure no overlap when they meet at center */
+  /* Hardware acceleration for smoother animation */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @media (max-width: 767px) {
